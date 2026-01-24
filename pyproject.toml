@@ -1,0 +1,75 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "configurator"
+dynamic = ["version"]
+description = 'configurator for the Application Hub'
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+keywords = []
+authors = [
+  { name = "Fabrice Brito", email = "fabrice.brito@terradue.com" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = [
+  "pydantic",
+  "pyyaml",
+  "click",
+]
+
+[project.urls]
+Documentation = "https://github.com/Fabrice Brito/apex-config#readme"
+Issues = "https://github.com/Fabrice Brito/apex-config/issues"
+Source = "https://github.com/Fabrice Brito/apex-config"
+
+[tool.hatch.version]
+path = "configurator/__about__.py"
+
+[tool.hatch.envs.types]
+extra-dependencies = [
+  "mypy>=1.0.0",
+]
+[tool.hatch.envs.types.scripts]
+check = "mypy --install-types --non-interactive {args:configurator tests}"
+
+[tool.coverage.run]
+source_pkgs = ["configurator", "tests"]
+branch = true
+parallel = true
+omit = [
+  "configurator/__about__.py",
+]
+
+[tool.coverage.paths]
+configurator = ["src/configurator", "*/configurator/src/configurator"]
+tests = ["tests", "*/configurator/tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
+
+
+[tool.hatch.envs.default]
+dependencies = [
+  "pydantic",
+  "pyyaml"
+]
+
+[project.scripts]
+dump-config = "configurator.main:main"
