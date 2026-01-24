@@ -73,9 +73,17 @@ def apply_overrides(profile, overrides: dict[str, str]) -> None:
                 f"for profile '{profile.slug}'"
             )
 
-        # Coerce known numeric fields
-        if field in {"cpu_limit", "cpu_guarantee"}:
+        if field == "groups":
+            groups = [g.strip() for g in raw.split(",") if g.strip()]
+            if not groups:
+                raise click.UsageError(
+                    f"groups override for '{profile.slug}' cannot be empty"
+                )
+            value = groups
+
+        elif field in {"cpu_limit", "cpu_guarantee"}:
             value = int(raw)
+
         else:
             value = raw
 

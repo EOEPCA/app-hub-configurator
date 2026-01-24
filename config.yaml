@@ -1,7 +1,9 @@
 profiles:
 - id: profile_coder_app
   groups:
-  - developers
+  - group-a
+  - group-b
+  - group-c
   definition:
     display_name: Code Server
     description: Code Server for development
@@ -97,7 +99,8 @@ profiles:
       sub_path: init
 - id: profile_gpu_coder_app
   groups:
-  - developers
+  - ml-users
+  - gpu-users
   definition:
     display_name: GPU Code Server
     description: Code Server with GPU acceleration
@@ -195,7 +198,9 @@ profiles:
       sub_path: init
 - id: profile_remote_desktop
   groups:
-  - developers
+  - group-a
+  - group-b
+  - group-c
   definition:
     display_name: Remote Desktop
     description: Linux desktop environment via web browser (noVNC)
@@ -268,7 +273,9 @@ profiles:
       sub_path: init
 - id: profile_qgis_remote_desktop
   groups:
-  - developers
+  - group-a
+  - group-b
+  - group-c
   definition:
     display_name: QGIS Remote Desktop
     description: Linux desktop environment with QGIS via web browser
