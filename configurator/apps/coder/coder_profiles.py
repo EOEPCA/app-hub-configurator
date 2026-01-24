@@ -1,4 +1,5 @@
 
+import os
 from configurator.apps.coder import BaseCoderProfile
 
 class CoderProfile(BaseCoderProfile):
@@ -11,6 +12,11 @@ class CoderProfile(BaseCoderProfile):
 
     storage_class_rwo = "standard"
     storage_class_rwx = "standard"
+
+    base_path = os.path.dirname(__file__)
+    bash_login_path = os.path.join(base_path, f"config_maps/{slug}/bash-login")
+    bashrc_path = os.path.join(base_path, f"config_maps/{slug}/bash-rc")
+    init_script_path = os.path.join(base_path, f"config_maps/{slug}/init.sh")
 
 class GpuCoderProfile(BaseCoderProfile):
     display_name = "GPU Code Server"
@@ -29,6 +35,11 @@ class GpuCoderProfile(BaseCoderProfile):
 
     workspace_volume_size = "20Gi"
     calrissian_volume_size = "50Gi"
+
+    base_path = os.path.dirname(__file__)
+    bash_login_path = os.path.join(base_path, f"config_maps/{slug}/bash-login")
+    bashrc_path = os.path.join(base_path, f"config_maps/{slug}/bash-rc")
+    init_script_path = os.path.join(base_path, f"config_maps/{slug}/init.sh")
 
     def __init__(self, *, node_selector=None, **kwargs):
         selector = {

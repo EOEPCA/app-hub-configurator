@@ -48,8 +48,4 @@ class BaseCoderProfile(BaseAppProfile):
     mem_guarantee = "4G"
     mem_limit = "6G"
 
-    # shared coder config
-    base_path = os.path.dirname(__file__)
-    bash_login_path = os.path.join(base_path, "config_maps/bash-login")
-    bashrc_path = os.path.join(base_path, "config_maps/bash-rc")
-    init_script_path = os.path.join(base_path, "config_maps/init.sh")
+
