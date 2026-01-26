@@ -5,6 +5,7 @@ from configurator.models import (
     ProfileDefinition,
     KubespawnerOverride,
     Volume,
+    Manifest,
 )
 from configurator.apps.app_helpers import (
     get_bash_login_config_map,
@@ -81,6 +82,9 @@ class BaseAppProfile:
     def get_default_volumes(self) -> list[Volume]:
         return []
 
+    def get_manifests(self) -> list[Manifest]:
+        return []
+
     # ---- internals --------------------------------------------
 
     def _build_config_maps(self):
@@ -143,6 +147,8 @@ class BaseAppProfile:
             role_bindings=self.role_bindings,
             image_pull_secrets=self.image_pull_secrets,
             pod_env_vars=self.get_pod_env_vars(),
+            manifests=self.get_manifests(),
+
         )
 
         extra = self.get_extra_resource_limits()

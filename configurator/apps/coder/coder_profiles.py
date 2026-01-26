@@ -1,6 +1,7 @@
 
 import os
 from configurator.apps.coder import BaseCoderProfile
+from configurator.apps.app_helpers import load_manifests
 
 class CoderProfile(BaseCoderProfile):
     display_name = "Code Server"
@@ -53,3 +54,34 @@ class GpuCoderProfile(BaseCoderProfile):
 
     def get_extra_resource_limits(self):
         return {"nvidia.com/gpu": self.gpu_limit}
+    
+class CoderDaskGatewayProfile(BaseCoderProfile):
+    display_name = "Code Server with Dask Gateway"
+    description = "Code Server with Dask Gateway for distributed computing"
+    slug = "coder_dask_gateway_app"
+
+    workspace_volume_size = "15Gi"
+    calrissian_volume_size = "30Gi"
+
+    storage_class_rwo = "standard"
+    storage_class_rwx = "standard"
+
+    base_path = os.path.dirname(__file__)
+    bash_login_path = os.path.join(base_path, f"config_maps/{slug}/bash-login")
+    bashrc_path = os.path.join(base_path, f"config_maps/{slug}/bash-rc")
+    init_script_path = os.path.join(base_path, f"config_maps/{slug}/init.sh")
+
+    def get_manifests(self):
+        return (
+            super().get_manifests()
+            + [
+                load_manifests(
+                    name="dask-gateway",
+                    key="dask-gateway",
+                    file_path=os.path.join(
+                        self.manifests_path, self.slug,
+                        "dask-gateway.yaml",
+                    ),
+                )
+            ]
+        )

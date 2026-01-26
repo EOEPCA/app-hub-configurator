@@ -4,13 +4,15 @@
 
 from configurator.apps import profile_registry
 from .base_coder import BaseCoderProfile
-from .coder_profiles import CoderProfile, GpuCoderProfile
+from .coder_profiles import CoderProfile, GpuCoderProfile, CoderDaskGatewayProfile
 
 __all__ = [
     "BaseCoderProfile",
     "CoderProfile",
     "GpuCoderProfile",
+    "CoderDaskGatewayProfile",
 ]
 
 profile_registry.register(CoderProfile)
 profile_registry.register(GpuCoderProfile)
+profile_registry.register(CoderDaskGatewayProfile)

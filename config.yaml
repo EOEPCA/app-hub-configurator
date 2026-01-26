@@ -97,6 +97,7 @@ profiles:
     - name: init
       mount_path: /opt/init/.init.sh
       sub_path: init
+  manifests: []
 - id: profile_gpu_coder_app
   groups:
   - ml-users
@@ -196,6 +197,7 @@ profiles:
     - name: init
       mount_path: /opt/init/.init.sh
       sub_path: init
+  manifests: []
 - id: profile_remote_desktop
   groups:
   - group-a
@@ -271,6 +273,7 @@ profiles:
     - name: init
       mount_path: /opt/init/.init.sh
       sub_path: init
+  manifests: []
 - id: profile_qgis_remote_desktop
   groups:
   - group-a
@@ -346,3 +349,197 @@ profiles:
     - name: init
       mount_path: /opt/init/.init.sh
       sub_path: init
+  manifests: []
+- id: profile_coder_dask_gateway_app
+  groups:
+  - group-a
+  - group-b
+  - group-c
+  definition:
+    display_name: Code Server with Dask Gateway
+    description: Code Server with Dask Gateway for distributed computing
+    slug: coder_dask_gateway_app
+    default: false
+    kubespawner_override:
+      cpu_limit: 2
+      cpu_guarantee: 1
+      mem_limit: 6G
+      mem_guarantee: 4G
+      image: ghcr.io/terradue/coder:latest
+      extra_resource_limits: {}
+      extra_resource_guarantees: {}
+  config_maps:
+  - name: bash-login
+    key: bash-login
+    mount_path: /workspace/.bash_login
+    default_mode: '0660'
+    readonly: true
+    content: 'source /workspace/.bashrc
+
+
+
+      gpu_coder_app'
+    persist: true
+  - name: bash-rc
+    key: bash-rc
+    mount_path: /workspace/.bashrc
+    default_mode: '0660'
+    readonly: true
+    content: "alias ll=\"ls -l\"\n\n# >>> conda initialize >>>\n# !! Contents within\
+      \ this block are managed by 'conda init' !!\n__conda_setup=\"$('/opt/conda/bin/conda'\
+      \ 'shell.bash' 'hook' 2> /dev/null)\"\nif [ $? -eq 0 ]; then\n    eval \"$__conda_setup\"\
+      \nelse\n    if [ -f \"/opt/conda/etc/profile.d/conda.sh\" ]; then\n        .\
+      \ \"/opt/conda/etc/profile.d/conda.sh\"\n    else\n        export PATH=\"/srv/conda/bin:$PATH\"\
+      \n    fi\nfi\nunset __conda_setup\n\nif [ -f \"/opt/conda/etc/profile.d/mamba.sh\"\
+      \ ]; then\n    . \"/opt/conda/etc/profile.d/mamba.sh\"\nfi\n# <<< conda initialize\
+      \ <<<"
+    persist: true
+  - name: init
+    key: init
+    mount_path: /opt/init/.init.sh
+    default_mode: '0660'
+    readonly: true
+    content: echo "Initializing environment..."
+    persist: true
+  volumes:
+  - name: calrissian-volume
+    claim_name: calrissian-claim
+    size: 30Gi
+    storage_class: standard
+    access_modes:
+    - ReadWriteMany
+    volume_mount:
+      name: calrissian-volume
+      mount_path: /calrissian
+    persist: false
+  - name: workspace-volume
+    claim_name: workspace-claim
+    size: 15Gi
+    storage_class: standard
+    access_modes:
+    - ReadWriteOnce
+    volume_mount:
+      name: workspace-volume
+      mount_path: /workspace
+    persist: true
+  pod_env_vars:
+    HOME: /workspace
+    CONDA_ENVS_PATH: /workspace/.envs
+    CONDARC: /workspace/.condarc
+    XDG_RUNTIME_DIR: /workspace/.local
+    XDG_CONFIG_HOME: /workspace/.local
+    XDG_DATA_HOME: /workspace/.local/share/
+    CWLTOOL_OPTIONS: --podman
+  node_selector: {}
+  role_bindings: []
+  image_pull_secrets: []
+  init_containers:
+  - name: init-file-on-volume
+    image: ghcr.io/terradue/coder:latest
+    command:
+    - sh
+    - -c
+    - sh /opt/init/.init.sh
+    volume_mounts:
+    - name: calrissian-volume
+      mount_path: /calrissian
+    - name: workspace-volume
+      mount_path: /workspace
+    - name: init
+      mount_path: /opt/init/.init.sh
+      sub_path: init
+  manifests:
+  - name: dask-gateway
+    key: dask-gateway
+    content:
+    - apiVersion: helm.crossplane.io/v1beta1
+      kind: Release
+      metadata:
+        name: dask-gw-jupyter-{{ spawner.user.name }}
+        namespace: '{{ namespace }}'
+      spec:
+        forProvider:
+          chart:
+            name: dask-gateway
+            version: 2024.1.0
+            repository: https://helm.dask.org
+          namespace: '{{ namespace }}'
+          values:
+            gateway:
+              backend:
+                image:
+                  name: ghcr.io/fabricebrito/dev-platform-dask-gateway/worker
+                  tag: 1.0.0
+              extraConfig:
+                dask_gateway_config.py: "c = get_config()\nfrom dask_gateway_server.options\
+                  \ import Options, String, Integer, Float\nc.Backend.cluster_options\
+                  \ = Options(\n  Float(\"worker_cores_limit\", default=1, label=\"\
+                  Worker Cores Limit\"),\n  Float(\"worker_cores\", default=1, label=\"\
+                  Worker Cores\"),\n  String(\"worker_memory\", default=\"1 G\", label=\"\
+                  Worker Memory\"),\n  String(\"image\", default=\"daskgateway/dask-worker:latest\"\
+                  , label=\"Worker Image\")\n)\n"
+            traefik:
+              service:
+                type: ClusterIP
+        providerConfigRef:
+          name: helm-provider
+    - apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: dask-gateway-config
+      data:
+        gateway: "gateway:\n  address: http://traefik-dask-gw-jupyter-{{ spawner.user.name\
+          \ }}-dask-gateway.{namespace}-{{ spawner.user.name }}.svc.cluster.local:80\n\
+          \n  cluster:\n    options: \n      image: \"ghcr.io/fabricebrito/dev-platform-dask-gateway/worker:1.0.0\"\
+          \n      worker_cores: 0.5\n      worker_cores_limit: 1\n      worker_memory:\
+          \ \"4 G\"\n"
+    - apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: dask-gateway-config-ws
+      data:
+        gateway: "gateway:\n  address: http://traefik-dask-gw-jupyter-{{ spawner.user.name\
+          \ }}-dask-gateway.{namespace}-{{ spawner.user.name }}.svc.cluster.local:80\n\
+          \n  cluster:\n    options: \n      image: \"ghcr.io/fabricebrito/dev-platform-dask-gateway/worker:1.0.0\"\
+          \n      worker_cores: 0.5\n      worker_cores_limit: 1\n      worker_memory:\
+          \ \"4 G\"\n"
+    - apiVersion: rbac.authorization.k8s.io/v1
+      kind: Role
+      metadata:
+        name: access-services
+      rules:
+      - verbs:
+        - get
+        - list
+        - watch
+        apiGroups:
+        - ''
+        resources:
+        - services
+        - pods/exec
+      - verbs:
+        - get
+        - list
+        - watch
+        apiGroups:
+        - ''
+        resources:
+        - pods
+      - verbs:
+        - create
+        apiGroups:
+        - ''
+        resources:
+        - pods/portforward
+    - apiVersion: rbac.authorization.k8s.io/v1
+      kind: RoleBinding
+      metadata:
+        name: bind-default-to-services
+      subjects:
+      - kind: ServiceAccount
+        name: default
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: Role
+        name: access-services
+    persist: false

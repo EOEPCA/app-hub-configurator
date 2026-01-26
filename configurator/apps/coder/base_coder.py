@@ -8,6 +8,10 @@ class BaseCoderProfile(BaseAppProfile):
 
     image = "ghcr.io/terradue/coder:latest"
     
+    base_path = os.path.dirname(__file__)
+    manifests_path = os.path.join(base_path, "manifests")
+
+
     def get_default_volumes(self) -> list[Volume]:
         
         return [
@@ -41,6 +45,9 @@ class BaseCoderProfile(BaseAppProfile):
         "XDG_DATA_HOME": f"{home_dir}/.local/share/",
         "CWLTOOL_OPTIONS": "--podman",
     }
+
+    def get_manifests(self):
+        return []
 
     # coder defaults
     cpu_guarantee = 1

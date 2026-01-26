@@ -1,5 +1,8 @@
-from configurator.models import ConfigMap, InitContainer, VolumeMount, InitContainerVolumeMount
+from configurator.models import ConfigMap, InitContainer, VolumeMount, InitContainerVolumeMount, Manifest
 from typing import List
+
+import yaml
+
 
 def create_init_container(image: str, volume_mounts: List[VolumeMount]) -> InitContainer:
     init_context_volume_mount = InitContainerVolumeMount(
@@ -64,4 +67,15 @@ def get_init_script_config_map(path: str, readonly: bool = True, persist: bool =
         persist=persist,
         mount_path="/opt/init/.init.sh",
         default_mode="0660",
+    )
+
+def load_manifests(*, name: str, key: str, file_path: str) -> Manifest:
+    with open(file_path, "r") as f:
+        content = list(yaml.safe_load_all(f))
+
+    return Manifest(
+        name=name,
+        key=key,
+        persist=False,
+        content=content,
     )
