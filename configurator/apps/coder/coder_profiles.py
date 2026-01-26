@@ -55,7 +55,10 @@ class GpuCoderProfile(BaseCoderProfile):
     def get_extra_resource_limits(self):
         return {"nvidia.com/gpu": self.gpu_limit}
     
-class CoderDaskGatewayProfile(BaseCoderProfile):
+class DaskGatewayCoderProfile(BaseCoderProfile):
+
+    default_url = "/workspace/dask-app-package"
+
     display_name = "Code Server with Dask Gateway"
     description = "Code Server with Dask Gateway for distributed computing"
     slug = "coder_dask_gateway_app"
@@ -70,6 +73,15 @@ class CoderDaskGatewayProfile(BaseCoderProfile):
     bash_login_path = os.path.join(base_path, f"config_maps/{slug}/bash-login")
     bashrc_path = os.path.join(base_path, f"config_maps/{slug}/bash-rc")
     init_script_path = os.path.join(base_path, f"config_maps/{slug}/init.sh")
+
+    def get_pod_env_vars(self) -> dict:
+
+        env = {**super().get_pod_env_vars(),            
+                "DASK_GATEWAY_ADDRESS": "http://traefik-dask-gw-jupyter-{{ spawner.user.name }}-dask-gateway.{{ namespace }}.svc.cluster.local:80",
+                "CODE_SERVER_WS": "/workspace/dask-app-package",
+                }
+
+        return env
 
     def get_manifests(self):
         return (

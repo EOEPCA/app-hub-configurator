@@ -1,8 +1,30 @@
 from configurator.models import ConfigMap, InitContainer, VolumeMount, InitContainerVolumeMount, Manifest
 from typing import List
-
+from ruamel.yaml.scalarstring import LiteralScalarString
 import yaml
 
+def literal(s: str):
+    return LiteralScalarString(s)
+
+def literalize_multiline(obj):
+    """
+    Recursively wrap multiline strings as LiteralScalarString.
+    """
+    if isinstance(obj, str):
+        if "\n" in obj:
+            return LiteralScalarString(obj)
+        return obj
+
+    if isinstance(obj, list):
+        return [literalize_multiline(i) for i in obj]
+
+    if isinstance(obj, dict):
+        return {
+            k: literalize_multiline(v)
+            for k, v in obj.items()
+        }
+
+    return obj
 
 def create_init_container(image: str, volume_mounts: List[VolumeMount]) -> InitContainer:
     init_context_volume_mount = InitContainerVolumeMount(
@@ -71,7 +93,10 @@ def get_init_script_config_map(path: str, readonly: bool = True, persist: bool =
 
 def load_manifests(*, name: str, key: str, file_path: str) -> Manifest:
     with open(file_path, "r") as f:
-        content = list(yaml.safe_load_all(f))
+        content = [
+            literalize_multiline(doc)
+            for doc in yaml.safe_load_all(f)
+        ]
 
     return Manifest(
         name=name,

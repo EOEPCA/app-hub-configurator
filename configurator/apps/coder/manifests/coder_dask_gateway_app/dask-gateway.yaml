@@ -39,7 +39,7 @@ metadata:
 data:
   gateway: |
     gateway:
-      address: http://traefik-dask-gw-jupyter-{{ spawner.user.name }}-dask-gateway.{namespace}-{{ spawner.user.name }}.svc.cluster.local:80
+      address: http://traefik-dask-gw-jupyter-{{ spawner.user.name }}-dask-gateway.{{ namespace }}.svc.cluster.local:80
 
       cluster:
         options: 
@@ -55,7 +55,7 @@ metadata:
 data:
   gateway: |
     gateway:
-      address: http://traefik-dask-gw-jupyter-{{ spawner.user.name }}-dask-gateway.{namespace}-{{ spawner.user.name }}.svc.cluster.local:80
+      address: http://traefik-dask-gw-jupyter-{{ spawner.user.name }}-dask-gateway.{{ namespace }}-{{ spawner.user.name }}.svc.cluster.local:80
 
       cluster:
         options: 

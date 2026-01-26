@@ -17,6 +17,8 @@ class DesktopQgisProfile(BaseRemoteDesktopProfile):
     description = "Linux desktop environment with QGIS via web browser"
     slug = "qgis_remote_desktop"
 
+    image = "ghcr.io/eoepca/iga-remote-desktop-qgis:latest"
+
     base_path = os.path.dirname(__file__)
     bash_login_path = os.path.join(base_path, f"config_maps/{slug}/bash-login")
     bashrc_path = os.path.join(base_path, f"config_maps/{slug}/bash-rc")

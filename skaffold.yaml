@@ -23,6 +23,12 @@ deploy:
         setFiles:
           configYml: config/config.yml
           jupyterConfig: config/jupyterhub_config.py
+      
+      - name: crossplane
+        remoteChart: crossplane-stable/crossplane
+        namespace: crossplane-system
+        createNamespace: true
+        version: 1.19.0
     hooks:
       before: []
         

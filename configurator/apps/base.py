@@ -91,10 +91,10 @@ class BaseAppProfile:
         cms = []
 
         if self.bash_login_path:
-            cms.append(get_bash_login_config_map(self.bash_login_path))
+            cms.append(get_bash_login_config_map(self.bash_login_path, persist=False))
 
         if self.bashrc_path:
-            cms.append(get_bashrc_config_map(self.bashrc_path))
+            cms.append(get_bashrc_config_map(self.bashrc_path, persist=False))
 
         return cms
 
@@ -102,7 +102,7 @@ class BaseAppProfile:
         if not self.init_script_path:
             return [], []
 
-        cm = get_init_script_config_map(self.init_script_path)
+        cm = get_init_script_config_map(self.init_script_path, persist=False)
         if not cm:
             return [], []
 

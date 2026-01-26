@@ -1,5 +1,6 @@
 import os
 from configurator.apps.base import BaseAppProfile
+from configurator.models import Volume, VolumeMount
 
 
 class BaseRemoteDesktopProfile(BaseAppProfile):
@@ -8,7 +9,7 @@ class BaseRemoteDesktopProfile(BaseAppProfile):
     # Desktop apps do NOT start at /lab
     default_url = "/desktop"
 
-    image = "ghcr.io/terradue/remote-desktop:latest"
+    image = "ghcr.io/eoepca/iga-remote-desktop:1.2.0"
 
     storage_class_rwo = "standard"
     storage_class_rwx = "standard"
@@ -34,3 +35,18 @@ class BaseRemoteDesktopProfile(BaseAppProfile):
     bash_login_path = os.path.join(base_path, "config_maps/bash-login")
     bashrc_path = os.path.join(base_path, "config_maps/bash-rc")
     init_script_path = os.path.join(base_path, "config_maps/init.sh")
+
+    def get_default_volumes(self) -> list[Volume]:
+        
+        return [
+            Volume(
+                name="workspace-volume",
+        size=self.workspace_volume_size,
+        claim_name="workspace-claim",
+        mount_path="/workspace",
+        storage_class=self.storage_class_rwo,
+        access_modes=["ReadWriteOnce"],
+        volume_mount=VolumeMount(name="workspace-volume", mount_path="/workspace"),
+        persist=True,
+            ),
+        ]

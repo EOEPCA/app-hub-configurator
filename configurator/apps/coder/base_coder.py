@@ -6,7 +6,7 @@ from configurator.apps.base import BaseAppProfile
 class BaseCoderProfile(BaseAppProfile):
     home_dir = "/workspace"
 
-    image = "ghcr.io/terradue/coder:latest"
+    image = "ghcr.io/eoepca/pde-code-server:1.1.0"
     
     base_path = os.path.dirname(__file__)
     manifests_path = os.path.join(base_path, "manifests")
@@ -38,8 +38,6 @@ class BaseCoderProfile(BaseAppProfile):
 
     pod_env_vars = {
         "HOME": home_dir,
-        "CONDA_ENVS_PATH": f"{home_dir}/.envs",
-        "CONDARC": f"{home_dir}/.condarc",
         "XDG_RUNTIME_DIR": f"{home_dir}/.local",
         "XDG_CONFIG_HOME": f"{home_dir}/.local",
         "XDG_DATA_HOME": f"{home_dir}/.local/share/",

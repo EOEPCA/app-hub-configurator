@@ -1,457 +1,391 @@
 profiles:
-- id: profile_coder_app
+- config_maps:
+  - content: "source /workspace/.bashrc\n\nexport NAMESPACE=\"{{ namespace }}\"\n\ncode_app"
+    default_mode: '0660'
+    key: bash-login
+    mount_path: /workspace/.bash_login
+    name: bash-login
+    persist: false
+    readonly: true
+  - content: "alias ll=\"ls -l\"\n\n# >>> conda initialize >>>\n# !! Contents within this block are managed by 'conda init' !!\n__conda_setup=\"$('/opt/conda/bin/conda' 'shell.bash' 'hook' 2> /dev/null)\"\nif [ $? -eq 0 ]; then\n    eval \"$__conda_setup\"\nelse\n    if [ -f \"/opt/conda/etc/profile.d/conda.sh\" ]; then\n        . \"/opt/conda/etc/profile.d/conda.sh\"\n    else\n        export PATH=\"/srv/conda/bin:$PATH\"\n    fi\nfi\nunset __conda_setup\n\nif [ -f \"/opt/conda/etc/profile.d/mamba.sh\" ]; then\n    . \"/opt/conda/etc/profile.d/mamba.sh\"\nfi\n# <<< conda initialize <<<"
+    default_mode: '0660'
+    key: bash-rc
+    mount_path: /workspace/.bashrc
+    name: bash-rc
+    persist: false
+    readonly: true
+  - content: echo "Initializing environment..."
+    default_mode: '0660'
+    key: init
+    mount_path: /opt/init/.init.sh
+    name: init
+    persist: false
+    readonly: true
+  definition:
+    default: false
+    description: Code Server for development
+    display_name: Code Server
+    kubespawner_override:
+      cpu_guarantee: 1
+      cpu_limit: 2
+      extra_resource_guarantees: {}
+      extra_resource_limits: {}
+      image: ghcr.io/eoepca/pde-code-server:1.1.0
+      mem_guarantee: 4G
+      mem_limit: 6G
+    slug: coder_app
   groups:
   - group-a
   - group-b
   - group-c
-  definition:
-    display_name: Code Server
-    description: Code Server for development
-    slug: coder_app
-    default: false
-    kubespawner_override:
-      cpu_limit: 2
-      cpu_guarantee: 1
-      mem_limit: 6G
-      mem_guarantee: 4G
-      image: ghcr.io/terradue/coder:2024.11
-      extra_resource_limits: {}
-      extra_resource_guarantees: {}
-  config_maps:
-  - name: bash-login
-    key: bash-login
-    mount_path: /workspace/.bash_login
-    default_mode: '0660'
-    readonly: true
-    content: 'source /workspace/.bashrc
-
-
-
-      code_app'
-    persist: true
-  - name: bash-rc
-    key: bash-rc
-    mount_path: /workspace/.bashrc
-    default_mode: '0660'
-    readonly: true
-    content: "alias ll=\"ls -l\"\n\n# >>> conda initialize >>>\n# !! Contents within\
-      \ this block are managed by 'conda init' !!\n__conda_setup=\"$('/opt/conda/bin/conda'\
-      \ 'shell.bash' 'hook' 2> /dev/null)\"\nif [ $? -eq 0 ]; then\n    eval \"$__conda_setup\"\
-      \nelse\n    if [ -f \"/opt/conda/etc/profile.d/conda.sh\" ]; then\n        .\
-      \ \"/opt/conda/etc/profile.d/conda.sh\"\n    else\n        export PATH=\"/srv/conda/bin:$PATH\"\
-      \n    fi\nfi\nunset __conda_setup\n\nif [ -f \"/opt/conda/etc/profile.d/mamba.sh\"\
-      \ ]; then\n    . \"/opt/conda/etc/profile.d/mamba.sh\"\nfi\n# <<< conda initialize\
-      \ <<<"
-    persist: true
-  - name: init
-    key: init
-    mount_path: /opt/init/.init.sh
-    default_mode: '0660'
-    readonly: true
-    content: echo "Initializing environment..."
-    persist: true
+  id: profile_coder_app
+  image_pull_secrets: []
+  init_containers:
+  - command:
+    - sh
+    - -c
+    - sh /opt/init/.init.sh
+    image: ghcr.io/eoepca/pde-code-server:1.1.0
+    name: init-file-on-volume
+    volume_mounts:
+    - mount_path: /calrissian
+      name: calrissian-volume
+    - mount_path: /workspace
+      name: workspace-volume
+    - mount_path: /opt/init/.init.sh
+      name: init
+      sub_path: init
+  manifests: []
+  node_selector: {}
+  pod_env_vars:
+    CWLTOOL_OPTIONS: --podman
+    HOME: /workspace
+    XDG_CONFIG_HOME: /workspace/.local
+    XDG_DATA_HOME: /workspace/.local/share/
+    XDG_RUNTIME_DIR: /workspace/.local
+  role_bindings: []
   volumes:
-  - name: calrissian-volume
+  - access_modes:
+    - ReadWriteMany
     claim_name: calrissian-claim
+    name: calrissian-volume
+    persist: false
     size: 25Gi
     storage_class: standard
-    access_modes:
-    - ReadWriteMany
     volume_mount:
-      name: calrissian-volume
       mount_path: /calrissian
-    persist: false
-  - name: workspace-volume
+      name: calrissian-volume
+  - access_modes:
+    - ReadWriteOnce
     claim_name: workspace-claim
+    name: workspace-volume
+    persist: true
     size: 10Gi
     storage_class: standard
-    access_modes:
-    - ReadWriteOnce
     volume_mount:
+      mount_path: /workspace
       name: workspace-volume
-      mount_path: /workspace
-    persist: true
-  pod_env_vars:
-    HOME: /workspace
-    CONDA_ENVS_PATH: /workspace/.envs
-    CONDARC: /workspace/.condarc
-    XDG_RUNTIME_DIR: /workspace/.local
-    XDG_CONFIG_HOME: /workspace/.local
-    XDG_DATA_HOME: /workspace/.local/share/
-    CWLTOOL_OPTIONS: --podman
-  node_selector: {}
-  role_bindings: []
-  image_pull_secrets: []
-  init_containers:
-  - name: init-file-on-volume
-    image: ghcr.io/terradue/coder:2024.11
-    command:
-    - sh
-    - -c
-    - sh /opt/init/.init.sh
-    volume_mounts:
-    - name: calrissian-volume
-      mount_path: /calrissian
-    - name: workspace-volume
-      mount_path: /workspace
-    - name: init
-      mount_path: /opt/init/.init.sh
-      sub_path: init
-  manifests: []
-- id: profile_gpu_coder_app
-  groups:
-  - ml-users
-  - gpu-users
+- config_maps:
+  - content: "source /workspace/.bashrc\n\n\ngpu_coder_app"
+    default_mode: '0660'
+    key: bash-login
+    mount_path: /workspace/.bash_login
+    name: bash-login
+    persist: false
+    readonly: true
+  - content: "alias ll=\"ls -l\"\n\n# >>> conda initialize >>>\n# !! Contents within this block are managed by 'conda init' !!\n__conda_setup=\"$('/opt/conda/bin/conda' 'shell.bash' 'hook' 2> /dev/null)\"\nif [ $? -eq 0 ]; then\n    eval \"$__conda_setup\"\nelse\n    if [ -f \"/opt/conda/etc/profile.d/conda.sh\" ]; then\n        . \"/opt/conda/etc/profile.d/conda.sh\"\n    else\n        export PATH=\"/srv/conda/bin:$PATH\"\n    fi\nfi\nunset __conda_setup\n\nif [ -f \"/opt/conda/etc/profile.d/mamba.sh\" ]; then\n    . \"/opt/conda/etc/profile.d/mamba.sh\"\nfi\n# <<< conda initialize <<<"
+    default_mode: '0660'
+    key: bash-rc
+    mount_path: /workspace/.bashrc
+    name: bash-rc
+    persist: false
+    readonly: true
+  - content: echo "Initializing environment..."
+    default_mode: '0660'
+    key: init
+    mount_path: /opt/init/.init.sh
+    name: init
+    persist: false
+    readonly: true
   definition:
-    display_name: GPU Code Server
-    description: Code Server with GPU acceleration
-    slug: gpu_coder_app
     default: false
+    description: Code Server with GPU acceleration
+    display_name: GPU Code Server
     kubespawner_override:
-      cpu_limit: 8
       cpu_guarantee: 4
-      mem_limit: 32G
-      mem_guarantee: 16G
-      image: ghcr.io/terradue/coder:latest
+      cpu_limit: 8
+      extra_resource_guarantees: {}
       extra_resource_limits:
         nvidia.com/gpu: 1
-      extra_resource_guarantees: {}
-  config_maps:
-  - name: bash-login
-    key: bash-login
-    mount_path: /workspace/.bash_login
-    default_mode: '0660'
-    readonly: true
-    content: 'source /workspace/.bashrc
-
-
-
-      gpu_coder_app'
-    persist: true
-  - name: bash-rc
-    key: bash-rc
-    mount_path: /workspace/.bashrc
-    default_mode: '0660'
-    readonly: true
-    content: "alias ll=\"ls -l\"\n\n# >>> conda initialize >>>\n# !! Contents within\
-      \ this block are managed by 'conda init' !!\n__conda_setup=\"$('/opt/conda/bin/conda'\
-      \ 'shell.bash' 'hook' 2> /dev/null)\"\nif [ $? -eq 0 ]; then\n    eval \"$__conda_setup\"\
-      \nelse\n    if [ -f \"/opt/conda/etc/profile.d/conda.sh\" ]; then\n        .\
-      \ \"/opt/conda/etc/profile.d/conda.sh\"\n    else\n        export PATH=\"/srv/conda/bin:$PATH\"\
-      \n    fi\nfi\nunset __conda_setup\n\nif [ -f \"/opt/conda/etc/profile.d/mamba.sh\"\
-      \ ]; then\n    . \"/opt/conda/etc/profile.d/mamba.sh\"\nfi\n# <<< conda initialize\
-      \ <<<"
-    persist: true
-  - name: init
-    key: init
-    mount_path: /opt/init/.init.sh
-    default_mode: '0660'
-    readonly: true
-    content: echo "Initializing environment..."
-    persist: true
-  volumes:
-  - name: calrissian-volume
-    claim_name: calrissian-claim
-    size: 50Gi
-    storage_class: standard
-    access_modes:
-    - ReadWriteMany
-    volume_mount:
+      image: ghcr.io/eoepca/pde-code-server:1.1.0
+      mem_guarantee: 16G
+      mem_limit: 32G
+    slug: gpu_coder_app
+  groups:
+  - group-a
+  - group-b
+  - group-c
+  id: profile_gpu_coder_app
+  image_pull_secrets: []
+  init_containers:
+  - command:
+    - sh
+    - -c
+    - sh /opt/init/.init.sh
+    image: ghcr.io/eoepca/pde-code-server:1.1.0
+    name: init-file-on-volume
+    volume_mounts:
+    - mount_path: /calrissian
       name: calrissian-volume
-      mount_path: /calrissian
-    persist: false
-  - name: workspace-volume
-    claim_name: workspace-claim
-    size: 20Gi
-    storage_class: standard
-    access_modes:
-    - ReadWriteOnce
-    volume_mount:
+    - mount_path: /workspace
       name: workspace-volume
-      mount_path: /workspace
-    persist: true
-  pod_env_vars:
-    HOME: /workspace
-    CONDA_ENVS_PATH: /workspace/.envs
-    CONDARC: /workspace/.condarc
-    XDG_RUNTIME_DIR: /workspace/.local
-    XDG_CONFIG_HOME: /workspace/.local
-    XDG_DATA_HOME: /workspace/.local/share/
-    CWLTOOL_OPTIONS: --podman
+    - mount_path: /opt/init/.init.sh
+      name: init
+      sub_path: init
+  manifests: []
   node_selector:
     nvidia.com/gpu.present: 'true'
-  role_bindings: []
-  image_pull_secrets: []
-  init_containers:
-  - name: init-file-on-volume
-    image: ghcr.io/terradue/coder:latest
-    command:
-    - sh
-    - -c
-    - sh /opt/init/.init.sh
-    volume_mounts:
-    - name: calrissian-volume
-      mount_path: /calrissian
-    - name: workspace-volume
-      mount_path: /workspace
-    - name: init
-      mount_path: /opt/init/.init.sh
-      sub_path: init
-  manifests: []
-- id: profile_remote_desktop
-  groups:
-  - group-a
-  - group-b
-  - group-c
-  definition:
-    display_name: Remote Desktop
-    description: Linux desktop environment via web browser (noVNC)
-    slug: remote_desktop
-    default: false
-    kubespawner_override:
-      cpu_limit: 2
-      cpu_guarantee: 1
-      mem_limit: 6G
-      mem_guarantee: 4G
-      image: ghcr.io/terradue/remote-desktop:latest
-      extra_resource_limits: {}
-      extra_resource_guarantees: {}
-  config_maps:
-  - name: bash-login
-    key: bash-login
-    mount_path: /workspace/.bash_login
-    default_mode: '0660'
-    readonly: true
-    content: 'source /workspace/.bashrc
-
-
-
-      aaaa'
-    persist: true
-  - name: bash-rc
-    key: bash-rc
-    mount_path: /workspace/.bashrc
-    default_mode: '0660'
-    readonly: true
-    content: "alias ll=\"ls -l\"\n\n# >>> conda initialize >>>\n# !! Contents within\
-      \ this block are managed by 'conda init' !!\n__conda_setup=\"$('/opt/conda/bin/conda'\
-      \ 'shell.bash' 'hook' 2> /dev/null)\"\nif [ $? -eq 0 ]; then\n    eval \"$__conda_setup\"\
-      \nelse\n    if [ -f \"/opt/conda/etc/profile.d/conda.sh\" ]; then\n        .\
-      \ \"/opt/conda/etc/profile.d/conda.sh\"\n    else\n        export PATH=\"/srv/conda/bin:$PATH\"\
-      \n    fi\nfi\nunset __conda_setup\n\nif [ -f \"/opt/conda/etc/profile.d/mamba.sh\"\
-      \ ]; then\n    . \"/opt/conda/etc/profile.d/mamba.sh\"\nfi\n# <<< conda initialize\
-      \ <<<"
-    persist: true
-  - name: init
-    key: init
-    mount_path: /opt/init/.init.sh
-    default_mode: '0660'
-    readonly: true
-    content: echo "Initializing remote desktop environment..."
-    persist: true
-  volumes: []
   pod_env_vars:
+    CWLTOOL_OPTIONS: --podman
     HOME: /workspace
-    CONDA_ENVS_PATH: /workspace/.envs
-    CONDARC: /workspace/.condarc
-    XDG_RUNTIME_DIR: /workspace/.local
     XDG_CONFIG_HOME: /workspace/.local
     XDG_DATA_HOME: /workspace/.local/share/
-    CWLTOOL_OPTIONS: --podman
-  default_url: /desktop
-  node_selector: {}
-  role_bindings: []
-  image_pull_secrets: []
-  init_containers:
-  - name: init-file-on-volume
-    image: ghcr.io/terradue/remote-desktop:latest
-    command:
-    - sh
-    - -c
-    - sh /opt/init/.init.sh
-    volume_mounts:
-    - name: init
-      mount_path: /opt/init/.init.sh
-      sub_path: init
-  manifests: []
-- id: profile_qgis_remote_desktop
-  groups:
-  - group-a
-  - group-b
-  - group-c
-  definition:
-    display_name: QGIS Remote Desktop
-    description: Linux desktop environment with QGIS via web browser
-    slug: qgis_remote_desktop
-    default: false
-    kubespawner_override:
-      cpu_limit: 2
-      cpu_guarantee: 1
-      mem_limit: 6G
-      mem_guarantee: 4G
-      image: ghcr.io/terradue/remote-desktop:latest
-      extra_resource_limits: {}
-      extra_resource_guarantees: {}
-  config_maps:
-  - name: bash-login
-    key: bash-login
-    mount_path: /workspace/.bash_login
-    default_mode: '0660'
-    readonly: true
-    content: 'source /workspace/.bashrc
-
-
-
-      aaaa'
-    persist: true
-  - name: bash-rc
-    key: bash-rc
-    mount_path: /workspace/.bashrc
-    default_mode: '0660'
-    readonly: true
-    content: "alias ll=\"ls -l\"\n\n# >>> conda initialize >>>\n# !! Contents within\
-      \ this block are managed by 'conda init' !!\n__conda_setup=\"$('/opt/conda/bin/conda'\
-      \ 'shell.bash' 'hook' 2> /dev/null)\"\nif [ $? -eq 0 ]; then\n    eval \"$__conda_setup\"\
-      \nelse\n    if [ -f \"/opt/conda/etc/profile.d/conda.sh\" ]; then\n        .\
-      \ \"/opt/conda/etc/profile.d/conda.sh\"\n    else\n        export PATH=\"/srv/conda/bin:$PATH\"\
-      \n    fi\nfi\nunset __conda_setup\n\nif [ -f \"/opt/conda/etc/profile.d/mamba.sh\"\
-      \ ]; then\n    . \"/opt/conda/etc/profile.d/mamba.sh\"\nfi\n# <<< conda initialize\
-      \ <<<"
-    persist: true
-  - name: init
-    key: init
-    mount_path: /opt/init/.init.sh
-    default_mode: '0660'
-    readonly: true
-    content: echo "Initializing remote desktop environment..."
-    persist: true
-  volumes: []
-  pod_env_vars:
-    HOME: /workspace
-    CONDA_ENVS_PATH: /workspace/.envs
-    CONDARC: /workspace/.condarc
     XDG_RUNTIME_DIR: /workspace/.local
-    XDG_CONFIG_HOME: /workspace/.local
-    XDG_DATA_HOME: /workspace/.local/share/
-    CWLTOOL_OPTIONS: --podman
-  default_url: /desktop
-  node_selector: {}
   role_bindings: []
-  image_pull_secrets: []
-  init_containers:
-  - name: init-file-on-volume
-    image: ghcr.io/terradue/remote-desktop:latest
-    command:
-    - sh
-    - -c
-    - sh /opt/init/.init.sh
-    volume_mounts:
-    - name: init
-      mount_path: /opt/init/.init.sh
-      sub_path: init
-  manifests: []
-- id: profile_coder_dask_gateway_app
-  groups:
-  - group-a
-  - group-b
-  - group-c
-  definition:
-    display_name: Code Server with Dask Gateway
-    description: Code Server with Dask Gateway for distributed computing
-    slug: coder_dask_gateway_app
-    default: false
-    kubespawner_override:
-      cpu_limit: 2
-      cpu_guarantee: 1
-      mem_limit: 6G
-      mem_guarantee: 4G
-      image: ghcr.io/terradue/coder:latest
-      extra_resource_limits: {}
-      extra_resource_guarantees: {}
-  config_maps:
-  - name: bash-login
-    key: bash-login
-    mount_path: /workspace/.bash_login
-    default_mode: '0660'
-    readonly: true
-    content: 'source /workspace/.bashrc
-
-
-
-      gpu_coder_app'
-    persist: true
-  - name: bash-rc
-    key: bash-rc
-    mount_path: /workspace/.bashrc
-    default_mode: '0660'
-    readonly: true
-    content: "alias ll=\"ls -l\"\n\n# >>> conda initialize >>>\n# !! Contents within\
-      \ this block are managed by 'conda init' !!\n__conda_setup=\"$('/opt/conda/bin/conda'\
-      \ 'shell.bash' 'hook' 2> /dev/null)\"\nif [ $? -eq 0 ]; then\n    eval \"$__conda_setup\"\
-      \nelse\n    if [ -f \"/opt/conda/etc/profile.d/conda.sh\" ]; then\n        .\
-      \ \"/opt/conda/etc/profile.d/conda.sh\"\n    else\n        export PATH=\"/srv/conda/bin:$PATH\"\
-      \n    fi\nfi\nunset __conda_setup\n\nif [ -f \"/opt/conda/etc/profile.d/mamba.sh\"\
-      \ ]; then\n    . \"/opt/conda/etc/profile.d/mamba.sh\"\nfi\n# <<< conda initialize\
-      \ <<<"
-    persist: true
-  - name: init
-    key: init
-    mount_path: /opt/init/.init.sh
-    default_mode: '0660'
-    readonly: true
-    content: echo "Initializing environment..."
-    persist: true
   volumes:
-  - name: calrissian-volume
-    claim_name: calrissian-claim
-    size: 30Gi
-    storage_class: standard
-    access_modes:
+  - access_modes:
     - ReadWriteMany
-    volume_mount:
-      name: calrissian-volume
-      mount_path: /calrissian
+    claim_name: calrissian-claim
+    name: calrissian-volume
     persist: false
-  - name: workspace-volume
-    claim_name: workspace-claim
-    size: 15Gi
+    size: 50Gi
     storage_class: standard
-    access_modes:
-    - ReadWriteOnce
     volume_mount:
-      name: workspace-volume
-      mount_path: /workspace
+      mount_path: /calrissian
+      name: calrissian-volume
+  - access_modes:
+    - ReadWriteOnce
+    claim_name: workspace-claim
+    name: workspace-volume
     persist: true
-  pod_env_vars:
-    HOME: /workspace
-    CONDA_ENVS_PATH: /workspace/.envs
-    CONDARC: /workspace/.condarc
-    XDG_RUNTIME_DIR: /workspace/.local
-    XDG_CONFIG_HOME: /workspace/.local
-    XDG_DATA_HOME: /workspace/.local/share/
-    CWLTOOL_OPTIONS: --podman
-  node_selector: {}
-  role_bindings: []
+    size: 20Gi
+    storage_class: standard
+    volume_mount:
+      mount_path: /workspace
+      name: workspace-volume
+- config_maps:
+  - content: "source /workspace/.bashrc\n\n\naaaa"
+    default_mode: '0660'
+    key: bash-login
+    mount_path: /workspace/.bash_login
+    name: bash-login
+    persist: false
+    readonly: true
+  - content: "alias ll=\"ls -l\"\n\n# >>> conda initialize >>>\n# !! Contents within this block are managed by 'conda init' !!\n__conda_setup=\"$('/opt/conda/bin/conda' 'shell.bash' 'hook' 2> /dev/null)\"\nif [ $? -eq 0 ]; then\n    eval \"$__conda_setup\"\nelse\n    if [ -f \"/opt/conda/etc/profile.d/conda.sh\" ]; then\n        . \"/opt/conda/etc/profile.d/conda.sh\"\n    else\n        export PATH=\"/srv/conda/bin:$PATH\"\n    fi\nfi\nunset __conda_setup\n\nif [ -f \"/opt/conda/etc/profile.d/mamba.sh\" ]; then\n    . \"/opt/conda/etc/profile.d/mamba.sh\"\nfi\n# <<< conda initialize <<<"
+    default_mode: '0660'
+    key: bash-rc
+    mount_path: /workspace/.bashrc
+    name: bash-rc
+    persist: false
+    readonly: true
+  - content: echo "Initializing remote desktop environment..."
+    default_mode: '0660'
+    key: init
+    mount_path: /opt/init/.init.sh
+    name: init
+    persist: false
+    readonly: true
+  default_url: /desktop
+  definition:
+    default: false
+    description: Linux desktop environment via web browser (noVNC)
+    display_name: Remote Desktop
+    kubespawner_override:
+      cpu_guarantee: 1
+      cpu_limit: 2
+      extra_resource_guarantees: {}
+      extra_resource_limits: {}
+      image: ghcr.io/eoepca/iga-remote-desktop:1.2.0
+      mem_guarantee: 4G
+      mem_limit: 6G
+    slug: remote_desktop
+  groups:
+  - group-a
+  - group-b
+  - group-c
+  id: profile_remote_desktop
   image_pull_secrets: []
   init_containers:
-  - name: init-file-on-volume
-    image: ghcr.io/terradue/coder:latest
-    command:
+  - command:
     - sh
     - -c
     - sh /opt/init/.init.sh
+    image: ghcr.io/eoepca/iga-remote-desktop:1.2.0
+    name: init-file-on-volume
     volume_mounts:
-    - name: calrissian-volume
-      mount_path: /calrissian
-    - name: workspace-volume
+    - mount_path: /workspace
+      name: workspace-volume
+    - mount_path: /opt/init/.init.sh
+      name: init
+      sub_path: init
+  manifests: []
+  node_selector: {}
+  pod_env_vars:
+    CONDARC: /workspace/.condarc
+    CONDA_ENVS_PATH: /workspace/.envs
+    CWLTOOL_OPTIONS: --podman
+    HOME: /workspace
+    XDG_CONFIG_HOME: /workspace/.local
+    XDG_DATA_HOME: /workspace/.local/share/
+    XDG_RUNTIME_DIR: /workspace/.local
+  role_bindings: []
+  volumes:
+  - access_modes:
+    - ReadWriteOnce
+    claim_name: workspace-claim
+    name: workspace-volume
+    persist: true
+    size: 20Gi
+    storage_class: standard
+    volume_mount:
       mount_path: /workspace
-    - name: init
-      mount_path: /opt/init/.init.sh
+      name: workspace-volume
+- config_maps:
+  - content: "source /workspace/.bashrc\n\n\naaaa"
+    default_mode: '0660'
+    key: bash-login
+    mount_path: /workspace/.bash_login
+    name: bash-login
+    persist: false
+    readonly: true
+  - content: "alias ll=\"ls -l\"\n\n# >>> conda initialize >>>\n# !! Contents within this block are managed by 'conda init' !!\n__conda_setup=\"$('/opt/conda/bin/conda' 'shell.bash' 'hook' 2> /dev/null)\"\nif [ $? -eq 0 ]; then\n    eval \"$__conda_setup\"\nelse\n    if [ -f \"/opt/conda/etc/profile.d/conda.sh\" ]; then\n        . \"/opt/conda/etc/profile.d/conda.sh\"\n    else\n        export PATH=\"/srv/conda/bin:$PATH\"\n    fi\nfi\nunset __conda_setup\n\nif [ -f \"/opt/conda/etc/profile.d/mamba.sh\" ]; then\n    . \"/opt/conda/etc/profile.d/mamba.sh\"\nfi\n# <<< conda initialize <<<"
+    default_mode: '0660'
+    key: bash-rc
+    mount_path: /workspace/.bashrc
+    name: bash-rc
+    persist: false
+    readonly: true
+  - content: echo "Initializing remote desktop environment..."
+    default_mode: '0660'
+    key: init
+    mount_path: /opt/init/.init.sh
+    name: init
+    persist: false
+    readonly: true
+  default_url: /desktop
+  definition:
+    default: false
+    description: Linux desktop environment with QGIS via web browser
+    display_name: QGIS Remote Desktop
+    kubespawner_override:
+      cpu_guarantee: 1
+      cpu_limit: 2
+      extra_resource_guarantees: {}
+      extra_resource_limits: {}
+      image: ghcr.io/eoepca/iga-remote-desktop-qgis:latest
+      mem_guarantee: 4G
+      mem_limit: 6G
+    slug: qgis_remote_desktop
+  groups:
+  - group-a
+  - group-b
+  - group-c
+  id: profile_qgis_remote_desktop
+  image_pull_secrets: []
+  init_containers:
+  - command:
+    - sh
+    - -c
+    - sh /opt/init/.init.sh
+    image: ghcr.io/eoepca/iga-remote-desktop-qgis:latest
+    name: init-file-on-volume
+    volume_mounts:
+    - mount_path: /workspace
+      name: workspace-volume
+    - mount_path: /opt/init/.init.sh
+      name: init
+      sub_path: init
+  manifests: []
+  node_selector: {}
+  pod_env_vars:
+    CONDARC: /workspace/.condarc
+    CONDA_ENVS_PATH: /workspace/.envs
+    CWLTOOL_OPTIONS: --podman
+    HOME: /workspace
+    XDG_CONFIG_HOME: /workspace/.local
+    XDG_DATA_HOME: /workspace/.local/share/
+    XDG_RUNTIME_DIR: /workspace/.local
+  role_bindings: []
+  volumes:
+  - access_modes:
+    - ReadWriteOnce
+    claim_name: workspace-claim
+    name: workspace-volume
+    persist: true
+    size: 20Gi
+    storage_class: standard
+    volume_mount:
+      mount_path: /workspace
+      name: workspace-volume
+- config_maps:
+  - content: source /workspace/.bashrc
+    default_mode: '0660'
+    key: bash-login
+    mount_path: /workspace/.bash_login
+    name: bash-login
+    persist: false
+    readonly: true
+  - content: "alias ll=\"ls -l\"\n\n# >>> conda initialize >>>\n# !! Contents within this block are managed by 'conda init' !!\n__conda_setup=\"$('/opt/conda/bin/conda' 'shell.bash' 'hook' 2> /dev/null)\"\nif [ $? -eq 0 ]; then\n    eval \"$__conda_setup\"\nelse\n    if [ -f \"/opt/conda/etc/profile.d/conda.sh\" ]; then\n        . \"/opt/conda/etc/profile.d/conda.sh\"\n    else\n        export PATH=\"/srv/conda/bin:$PATH\"\n    fi\nfi\nunset __conda_setup\n\nif [ -f \"/opt/conda/etc/profile.d/mamba.sh\" ]; then\n    . \"/opt/conda/etc/profile.d/mamba.sh\"\nfi\n# <<< conda initialize <<<"
+    default_mode: '0660'
+    key: bash-rc
+    mount_path: /workspace/.bashrc
+    name: bash-rc
+    persist: false
+    readonly: true
+  - content: "echo \"Initializing environment...\"\n\ncd /workspace\n\ngit clone 'https://github.com/eoap/dask-app-package.git'\n\ncode-server --install-extension ms-python.python --install-extension redhat.vscode-yaml --install-extension sbg-rabix.benten-cwl --install-extension ms-toolsai.jupyter\n\nln -s /workspace/.local/share/code-server/extensions /workspace/extensions\n\nmkdir -p /workspace/User/\n\necho '{\"workbench.colorTheme\": \"Visual Studio Dark\"}' > /workspace/User/settings.json\n\n# eopf-sentinel-2 environment\npython -m venv /workspace/.venv-eopf\nsource /workspace/.venv-eopf/bin/activate\n/workspace/.venv-eopf/bin/pip install --upgrade uv\n/workspace/.venv-eopf/bin/python -m uv pip install numpy==1.26.3 dask==2025.4.0 distributed==2025.4.0 dask-gateway==2025.4.0 pystac bokeh rioxarray==0.18.1 loguru==0.7.3 odc-stac[botocore]==0.3.10 stackstac==0.5.1 pystac-client==0.8.6 planetary-computer==1.0.0 xarray-spatial==0.4.0 \"xarray[complete]==2025.4.0\" ipykernel rio-color==2.0.1\nres=$?\nif [ $res -ne 0 ]; then\n    echo \"Failed to install packages\"\n    exit $res\nfi\n\ncd /workspace/dask-app-package/eopf-sentinel-2\n/workspace/.venv-eopf/bin/python -m uv pip install -e .\n\n/workspace/.venv-eopf/bin/python -m ipykernel install --user --name dask-gateway-eopf --display-name \"Python (EOPF Dask Application Package)\""
+    default_mode: '0660'
+    key: init
+    mount_path: /opt/init/.init.sh
+    name: init
+    persist: false
+    readonly: true
+  default_url: /workspace/dask-app-package
+  definition:
+    default: false
+    description: Code Server with Dask Gateway for distributed computing
+    display_name: Code Server with Dask Gateway
+    kubespawner_override:
+      cpu_guarantee: 1
+      cpu_limit: 2
+      extra_resource_guarantees: {}
+      extra_resource_limits: {}
+      image: ghcr.io/eoepca/pde-code-server:1.1.0
+      mem_guarantee: 4G
+      mem_limit: 6G
+    slug: coder_dask_gateway_app
+  groups:
+  - group-a
+  - group-b
+  - group-c
+  id: profile_coder_dask_gateway_app
+  image_pull_secrets: []
+  init_containers:
+  - command:
+    - sh
+    - -c
+    - sh /opt/init/.init.sh
+    image: ghcr.io/eoepca/pde-code-server:1.1.0
+    name: init-file-on-volume
+    volume_mounts:
+    - mount_path: /calrissian
+      name: calrissian-volume
+    - mount_path: /workspace
+      name: workspace-volume
+    - mount_path: /opt/init/.init.sh
+      name: init
       sub_path: init
   manifests:
-  - name: dask-gateway
-    key: dask-gateway
-    content:
+  - content:
     - apiVersion: helm.crossplane.io/v1beta1
       kind: Release
       metadata:
@@ -461,8 +395,8 @@ profiles:
         forProvider:
           chart:
             name: dask-gateway
-            version: 2024.1.0
             repository: https://helm.dask.org
+            version: 2024.1.0
           namespace: '{{ namespace }}'
           values:
             gateway:
@@ -471,75 +405,182 @@ profiles:
                   name: ghcr.io/fabricebrito/dev-platform-dask-gateway/worker
                   tag: 1.0.0
               extraConfig:
-                dask_gateway_config.py: "c = get_config()\nfrom dask_gateway_server.options\
-                  \ import Options, String, Integer, Float\nc.Backend.cluster_options\
-                  \ = Options(\n  Float(\"worker_cores_limit\", default=1, label=\"\
-                  Worker Cores Limit\"),\n  Float(\"worker_cores\", default=1, label=\"\
-                  Worker Cores\"),\n  String(\"worker_memory\", default=\"1 G\", label=\"\
-                  Worker Memory\"),\n  String(\"image\", default=\"daskgateway/dask-worker:latest\"\
-                  , label=\"Worker Image\")\n)\n"
+                dask_gateway_config.py: "c = get_config()\nfrom dask_gateway_server.options import Options, String, Integer, Float\nc.Backend.cluster_options = Options(\n  Float(\"worker_cores_limit\", default=1, label=\"Worker Cores Limit\"),\n  Float(\"worker_cores\", default=1, label=\"Worker Cores\"),\n  String(\"worker_memory\", default=\"1 G\", label=\"Worker Memory\"),\n  String(\"image\", default=\"daskgateway/dask-worker:latest\", label=\"Worker Image\")\n)\n"
             traefik:
               service:
                 type: ClusterIP
         providerConfigRef:
           name: helm-provider
     - apiVersion: v1
+      data:
+        gateway: "gateway:\n  address: http://traefik-dask-gw-jupyter-{{ spawner.user.name }}-dask-gateway.{{ namespace }}.svc.cluster.local:80\n\n  cluster:\n    options: \n      image: \"ghcr.io/fabricebrito/dev-platform-dask-gateway/worker:1.0.0\"\n      worker_cores: 0.5\n      worker_cores_limit: 1\n      worker_memory: \"4 G\"\n"
       kind: ConfigMap
       metadata:
         name: dask-gateway-config
-      data:
-        gateway: "gateway:\n  address: http://traefik-dask-gw-jupyter-{{ spawner.user.name\
-          \ }}-dask-gateway.{namespace}-{{ spawner.user.name }}.svc.cluster.local:80\n\
-          \n  cluster:\n    options: \n      image: \"ghcr.io/fabricebrito/dev-platform-dask-gateway/worker:1.0.0\"\
-          \n      worker_cores: 0.5\n      worker_cores_limit: 1\n      worker_memory:\
-          \ \"4 G\"\n"
     - apiVersion: v1
+      data:
+        gateway: "gateway:\n  address: http://traefik-dask-gw-jupyter-{{ spawner.user.name }}-dask-gateway.{{ namespace }}-{{ spawner.user.name }}.svc.cluster.local:80\n\n  cluster:\n    options: \n      image: \"ghcr.io/fabricebrito/dev-platform-dask-gateway/worker:1.0.0\"\n      worker_cores: 0.5\n      worker_cores_limit: 1\n      worker_memory: \"4 G\"\n"
       kind: ConfigMap
       metadata:
         name: dask-gateway-config-ws
-      data:
-        gateway: "gateway:\n  address: http://traefik-dask-gw-jupyter-{{ spawner.user.name\
-          \ }}-dask-gateway.{namespace}-{{ spawner.user.name }}.svc.cluster.local:80\n\
-          \n  cluster:\n    options: \n      image: \"ghcr.io/fabricebrito/dev-platform-dask-gateway/worker:1.0.0\"\
-          \n      worker_cores: 0.5\n      worker_cores_limit: 1\n      worker_memory:\
-          \ \"4 G\"\n"
     - apiVersion: rbac.authorization.k8s.io/v1
       kind: Role
       metadata:
         name: access-services
       rules:
-      - verbs:
-        - get
-        - list
-        - watch
-        apiGroups:
+      - apiGroups:
         - ''
         resources:
         - services
         - pods/exec
-      - verbs:
+        verbs:
         - get
         - list
         - watch
-        apiGroups:
+      - apiGroups:
         - ''
         resources:
         - pods
-      - verbs:
-        - create
-        apiGroups:
+        verbs:
+        - get
+        - list
+        - watch
+      - apiGroups:
         - ''
         resources:
         - pods/portforward
+        verbs:
+        - create
     - apiVersion: rbac.authorization.k8s.io/v1
       kind: RoleBinding
       metadata:
         name: bind-default-to-services
-      subjects:
-      - kind: ServiceAccount
-        name: default
       roleRef:
         apiGroup: rbac.authorization.k8s.io
         kind: Role
         name: access-services
+      subjects:
+      - kind: ServiceAccount
+        name: default
+    key: dask-gateway
+    name: dask-gateway
     persist: false
+  node_selector: {}
+  pod_env_vars:
+    CODE_SERVER_WS: /workspace/dask-app-package
+    CWLTOOL_OPTIONS: --podman
+    DASK_GATEWAY_ADDRESS: http://traefik-dask-gw-jupyter-{{ spawner.user.name }}-dask-gateway.{{ namespace }}.svc.cluster.local:80
+    HOME: /workspace
+    XDG_CONFIG_HOME: /workspace/.local
+    XDG_DATA_HOME: /workspace/.local/share/
+    XDG_RUNTIME_DIR: /workspace/.local
+  role_bindings: []
+  volumes:
+  - access_modes:
+    - ReadWriteMany
+    claim_name: calrissian-claim
+    name: calrissian-volume
+    persist: false
+    size: 30Gi
+    storage_class: standard
+    volume_mount:
+      mount_path: /calrissian
+      name: calrissian-volume
+  - access_modes:
+    - ReadWriteOnce
+    claim_name: workspace-claim
+    name: workspace-volume
+    persist: true
+    size: 15Gi
+    storage_class: standard
+    volume_mount:
+      mount_path: /workspace
+      name: workspace-volume
+- config_maps:
+  - content: source /workspace/.bashrc
+    default_mode: '0660'
+    key: bash-login
+    mount_path: /workspace/.bash_login
+    name: bash-login
+    persist: false
+    readonly: true
+  - content: "alias ll=\"ls -l\"\n\n# >>> conda initialize >>>\n# !! Contents within this block are managed by 'conda init' !!\n__conda_setup=\"$('/opt/conda/bin/conda' 'shell.bash' 'hook' 2> /dev/null)\"\nif [ $? -eq 0 ]; then\n    eval \"$__conda_setup\"\nelse\n    if [ -f \"/opt/conda/etc/profile.d/conda.sh\" ]; then\n        . \"/opt/conda/etc/profile.d/conda.sh\"\n    else\n        export PATH=\"/srv/conda/bin:$PATH\"\n    fi\nfi\nunset __conda_setup\n\nif [ -f \"/opt/conda/etc/profile.d/mamba.sh\" ]; then\n    . \"/opt/conda/etc/profile.d/mamba.sh\"\nfi\n# <<< conda initialize <<<"
+    default_mode: '0660'
+    key: bash-rc
+    mount_path: /workspace/.bashrc
+    name: bash-rc
+    persist: false
+    readonly: true
+  - content: "echo \"Initializing environment...\"\n\ncd /workspace\n\ngit clone 'https://github.com/eoap/how-to.git'\n\ncode-server --install-extension ms-python.python --install-extension redhat.vscode-yaml --install-extension sbg-rabix.benten-cwl --install-extension ms-toolsai.jupyter\n\nln -s /workspace/.local/share/code-server/extensions /workspace/extensions\n\nmkdir -p /workspace/User/\n\necho '{\"workbench.colorTheme\": \"Visual Studio Dark\"}' > /workspace/User/settings.json\n\npython -m venv /workspace/.venv\nsource /workspace/.venv/bin/activate\n/workspace/.venv/bin/python -m pip install --no-cache-dir stactools rasterio requests stac-asset click-logging tabulate tqdm pystac-client ipykernel loguru scikit-image rio_stac calrissian tomlq\n\n/workspace/.venv/bin/python -m ipykernel install --user --name cwl_how_to_env --display-name \"Python (CWL How-To's)\""
+    default_mode: '0660'
+    key: init
+    mount_path: /opt/init/.init.sh
+    name: init
+    persist: false
+    readonly: true
+  default_url: /workspace/how-to
+  definition:
+    default: false
+    description: Code Server configured for running the How-To's of the Application Packages using CWL
+    display_name: Application Package CWL How-To's
+    kubespawner_override:
+      cpu_guarantee: 1
+      cpu_limit: 2
+      extra_resource_guarantees: {}
+      extra_resource_limits: {}
+      image: ghcr.io/eoepca/pde-code-server:1.1.0
+      mem_guarantee: 4G
+      mem_limit: 6G
+    slug: training_how_to_app
+  groups:
+  - group-a
+  - group-b
+  - group-c
+  id: profile_training_how_to_app
+  image_pull_secrets: []
+  init_containers:
+  - command:
+    - sh
+    - -c
+    - sh /opt/init/.init.sh
+    image: ghcr.io/eoepca/pde-code-server:1.1.0
+    name: init-file-on-volume
+    volume_mounts:
+    - mount_path: /calrissian
+      name: calrissian-volume
+    - mount_path: /workspace
+      name: workspace-volume
+    - mount_path: /opt/init/.init.sh
+      name: init
+      sub_path: init
+  manifests: []
+  node_selector: {}
+  pod_env_vars:
+    CODE_SERVER_WS: /workspace/how-to
+    CWLTOOL_OPTIONS: --podman
+    HOME: /workspace
+    XDG_CONFIG_HOME: /workspace/.local
+    XDG_DATA_HOME: /workspace/.local/share/
+    XDG_RUNTIME_DIR: /workspace/.local
+  role_bindings: []
+  volumes:
+  - access_modes:
+    - ReadWriteMany
+    claim_name: calrissian-claim
+    name: calrissian-volume
+    persist: false
+    size: 30Gi
+    storage_class: standard
+    volume_mount:
+      mount_path: /calrissian
+      name: calrissian-volume
+  - access_modes:
+    - ReadWriteOnce
+    claim_name: workspace-claim
+    name: workspace-volume
+    persist: true
+    size: 15Gi
+    storage_class: standard
+    volume_mount:
+      mount_path: /workspace
+      name: workspace-volume
