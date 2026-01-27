@@ -8,8 +8,8 @@ from ruamel.yaml.scalarstring import LiteralScalarString
 from ruamel.yaml.representer import SafeRepresenter
 
 # Trigger profile registration, set noqa to avoid unused import warning
-import configurator.apps.coder # noqa: F401
-import configurator.apps.remote_desktop # noqa: F401
+import configurator.apps.coder  # noqa: F401
+import configurator.apps.remote_desktop  # noqa: F401
 
 
 def literalize_multiline_values(obj):
@@ -21,15 +21,13 @@ def literalize_multiline_values(obj):
         return [literalize_multiline_values(i) for i in obj]
 
     if isinstance(obj, dict):
-        return {
-            k: literalize_multiline_values(v)
-            for k, v in obj.items()
-        }
+        return {k: literalize_multiline_values(v) for k, v in obj.items()}
 
     if isinstance(obj, str) and "\n" in obj:
         return LiteralScalarString(obj)
 
     return obj
+
 
 def write_yaml(config: Config, output: str) -> None:
     yaml_writer = YAML(typ="safe", pure=True)
@@ -43,7 +41,7 @@ def write_yaml(config: Config, output: str) -> None:
     )
 
     # Dump FIRST
-    data = config.model_dump(exclude_none=True)
+    data = config.model_dump(exclude_none=True, mode="json")
 
     # THEN wrap multiline strings
     data = literalize_multiline_values(data)
@@ -54,6 +52,7 @@ def write_yaml(config: Config, output: str) -> None:
 
 def split_csv(value: str) -> list[str]:
     return [v.strip() for v in value.split(",") if v.strip()]
+
 
 def parse_node_selector_overrides(
     values: tuple[str, ...],
@@ -66,13 +65,13 @@ def parse_node_selector_overrides(
             key, value = rest.split("=", 1)
         except ValueError:
             raise click.UsageError(
-                f"Invalid --node-selector '{item}'. "
-                "Expected <slug>:<key>=<value>"
+                f"Invalid --node-selector '{item}'. Expected <slug>:<key>=<value>"
             )
 
         result.setdefault(slug, {})[key] = value
     print(result)
     return result
+
 
 def parse_overrides(
     values: tuple[str, ...],
@@ -97,8 +96,7 @@ def parse_overrides(
             key, value = rest.split("=", 1)
         except ValueError:
             raise click.UsageError(
-                f"Invalid --override '{item}'. "
-                "Expected <slug>:<field>=<value>"
+                f"Invalid --override '{item}'. Expected <slug>:<field>=<value>"
             )
 
         result.setdefault(slug, {})[key] = value
@@ -110,8 +108,7 @@ def apply_overrides(profile, overrides: dict[str, str]) -> None:
     for field, raw in overrides.items():
         if not hasattr(profile, field):
             raise click.UsageError(
-                f"Unknown override field '{field}' "
-                f"for profile '{profile.slug}'"
+                f"Unknown override field '{field}' for profile '{profile.slug}'"
             )
 
         if field == "groups":
@@ -130,6 +127,7 @@ def apply_overrides(profile, overrides: dict[str, str]) -> None:
 
         setattr(profile, field, value)
 
+
 def describe(profile) -> None:
     click.echo()
     click.echo(f"Profile: {profile.slug}")
@@ -141,12 +139,8 @@ def describe(profile) -> None:
     click.echo()
 
     click.echo("Resources:")
-    click.echo(
-        f"  CPU   : {profile.cpu_guarantee} → {profile.cpu_limit}"
-    )
-    click.echo(
-        f"  Memory: {profile.mem_guarantee} → {profile.mem_limit}"
-    )
+    click.echo(f"  CPU   : {profile.cpu_guarantee} → {profile.cpu_limit}")
+    click.echo(f"  Memory: {profile.mem_guarantee} → {profile.mem_limit}")
     click.echo()
 
     volumes = profile.get_default_volumes()
@@ -155,9 +149,7 @@ def describe(profile) -> None:
         for v in volumes:
             mode = ",".join(v.access_modes)
             persist = "persistent" if v.persist else "transient"
-            click.echo(
-                f"  - {v.name} ({mode}, {v.size}, {persist})"
-            )
+            click.echo(f"  - {v.name} ({mode}, {v.size}, {persist})")
         click.echo()
 
     if profile.pod_env_vars:
@@ -226,9 +218,7 @@ def describe(profile) -> None:
     "--override",
     multiple=True,
     help=(
-        "Override profile attributes. "
-        "Format: <slug>:<field>=<value>. "
-        "Can be repeated."
+        "Override profile attributes. Format: <slug>:<field>=<value>. Can be repeated."
     ),
 )
 @click.option(
@@ -241,7 +231,17 @@ def describe(profile) -> None:
     metavar="SLUG",
     help="Print a human-readable summary of a profile and exit",
 )
-def main(profiles: str, groups: str, output: str, storage_class_rwo: str, storage_class_rwx: str, node_selector: list[str], override: list[str], list_profiles: bool, describe_profile: str) -> None:
+def main(
+    profiles: str,
+    groups: str,
+    output: str,
+    storage_class_rwo: str,
+    storage_class_rwx: str,
+    node_selector: list[str],
+    override: list[str],
+    list_profiles: bool,
+    describe_profile: str,
+) -> None:
     """
     Generate an application-hub configuration YAML.
     """
@@ -267,7 +267,6 @@ def main(profiles: str, groups: str, output: str, storage_class_rwo: str, storag
             else:
                 click.echo(f"  - {slug}")
         raise SystemExit(0)
-
 
     enabled_slugs = split_csv(profiles)
     group_list = split_csv(groups)

@@ -1,13 +1,13 @@
 profiles:
 - config_maps:
-  - content: "source /workspace/.bashrc\n\nexport NAMESPACE=\"{{ namespace }}\"\n\ncode_app"
+  - content: source /workspace/.bashrc
     default_mode: '0660'
     key: bash-login
     mount_path: /workspace/.bash_login
     name: bash-login
     persist: false
     readonly: true
-  - content: "alias ll=\"ls -l\"\n\n# >>> conda initialize >>>\n# !! Contents within this block are managed by 'conda init' !!\n__conda_setup=\"$('/opt/conda/bin/conda' 'shell.bash' 'hook' 2> /dev/null)\"\nif [ $? -eq 0 ]; then\n    eval \"$__conda_setup\"\nelse\n    if [ -f \"/opt/conda/etc/profile.d/conda.sh\" ]; then\n        . \"/opt/conda/etc/profile.d/conda.sh\"\n    else\n        export PATH=\"/srv/conda/bin:$PATH\"\n    fi\nfi\nunset __conda_setup\n\nif [ -f \"/opt/conda/etc/profile.d/mamba.sh\" ]; then\n    . \"/opt/conda/etc/profile.d/mamba.sh\"\nfi\n# <<< conda initialize <<<"
+  - content: "alias ll=\"ls -l\"\n\n. /home/jovyan/.bashrc\n\n# Cache Git HTTPS credentials in memory (8 hours)\ngit config --global credential.helper 'cache --timeout=28800'\n\nalias aws=\"aws --endpoint-url=http://localstack-jupyter-alice:4566\""
     default_mode: '0660'
     key: bash-rc
     mount_path: /workspace/.bashrc
@@ -21,6 +21,13 @@ profiles:
     name: init
     persist: false
     readonly: true
+  - content: "#!/bin/bash\n\n# Function to display help\nshow_help () {\n    echo \"Usage: $0 [options]\"\n    echo -e \"\\nThis utility copies your local image pull secrets to your kubernetes namespace\\n\"\n    echo \"Options:\"\n    echo \"  --help         Display this help message\"\n    exit 1\n}\n\n# Check for the --help option\n[ \"$1\" == \"--help\" ] && show_help\n\n# Check if kubectl is installed\n[ ! command -v kubectl &> /dev/null ] && {\n    echo \"kubectl not found. Please install kubectl.\"\n    exit 1\n}\n\n# Function to check if a file exists\nfile_exists () {\n    if [ ! -f \"$1\" ]; then\n        echo \"$1 not found\"\n        exit 1\n    fi\n}\n\n# Check if the XDG_RUNTIME_DIR environment variable is set\nif [ -z \"$XDG_RUNTIME_DIR\" ]; then\n    echo \"XDG_RUNTIME_DIR environment variable is not set\"\n    exit 1\nfi\n\nAUTH_JSON_PATH=\"$XDG_RUNTIME_DIR/containers/auth.json\"\n\nfile_exists ${AUTH_JSON_PATH}\n\nSECRET_NAME=\"incluster-cr-secret\"\n\nkubectl delete secret \"${SECRET_NAME}\" &> /dev/null\n\nkubectl create secret generic \"${SECRET_NAME}\" --from-file=.dockerconfigjson=${AUTH_JSON_PATH} --type=kubernetes.io/dockerconfigjson &> /dev/null\n\nres=$?\n\n[ ${res} == 0 ] && { \n    echo \"Image pull secrets updated\" \n} || { \n    echo \"\"\n    exit 1 \n}"
+    default_mode: '755'
+    key: copy-secrets
+    mount_path: /usr/bin/copy-secrets
+    name: copy-secrets
+    persist: false
+    readonly: true
   definition:
     default: false
     description: Code Server for development
@@ -30,22 +37,28 @@ profiles:
       cpu_limit: 2
       extra_resource_guarantees: {}
       extra_resource_limits: {}
-      image: ghcr.io/eoepca/pde-code-server:1.1.0
+      image: ghcr.io/eoepca/pde-code-server:latest-dev
       mem_guarantee: 4G
       mem_limit: 6G
     slug: coder_app
+  env_from_config_maps: []
+  env_from_secrets:
+  - localstack-s3-secret
   groups:
   - group-a
   - group-b
   - group-c
   id: profile_coder_app
-  image_pull_secrets: []
+  image_pull_secrets:
+  - data: ewoJImF1dGhzIjogewoJCSJjci50ZXJyYWR1ZS5jb20iOiB7CgkJCSJhdXRoIjogIlptSnlhWFJ2T21ZNVZFNUNaVTlIVEE9PSIKCQl9Cgl9Cn0=
+    name: incluster-cr-secret
+    persist: false
   init_containers:
   - command:
     - sh
     - -c
     - sh /opt/init/.init.sh
-    image: ghcr.io/eoepca/pde-code-server:1.1.0
+    image: ghcr.io/eoepca/pde-code-server:latest-dev
     name: init-file-on-volume
     volume_mounts:
     - mount_path: /calrissian
@@ -55,15 +68,129 @@ profiles:
     - mount_path: /opt/init/.init.sh
       name: init
       sub_path: init
-  manifests: []
+  manifests:
+  - content:
+    - apiVersion: helm.crossplane.io/v1beta1
+      kind: Release
+      metadata:
+        name: localstack-jupyter-{{ spawner.user.name }}
+        namespace: '{{ namespace }}'
+      spec:
+        forProvider:
+          chart:
+            name: localstack
+            repository: https://localstack.github.io/helm-charts
+            version: 0.6.20
+          namespace: '{{ namespace }}'
+          skipCreateNamespace: true
+          values:
+            service:
+              type: ClusterIP
+            serviceAccount:
+              create: true
+        providerConfigRef:
+          name: helm-provider
+    - apiVersion: v1
+      data:
+        AWS_ACCESS_KEY_ID: dGVzdA==
+        AWS_DEFAULT_REGION: dXMtZWFzdC0x
+        AWS_SECRET_ACCESS_KEY: dGVzdA==
+      kind: Secret
+      metadata:
+        name: localstack-s3-secret
+        namespace: '{{ namespace }}'
+      type: Opaque
+    key: local-stack
+    name: local-stack
+    persist: false
   node_selector: {}
   pod_env_vars:
     CWLTOOL_OPTIONS: --podman
     HOME: /workspace
+    NAMESPACE: '{{ namespace }}'
     XDG_CONFIG_HOME: /workspace/.local
     XDG_DATA_HOME: /workspace/.local/share/
     XDG_RUNTIME_DIR: /workspace/.local
-  role_bindings: []
+  role_bindings:
+  - name: log-reader-role-binding
+    persist: false
+    role:
+      api_groups:
+      - ''
+      name: log-reader-role
+      resources:
+      - pods
+      - pods/log
+      verbs:
+      - get
+      - list
+      - watch
+    subjects:
+    - kind: ServiceAccount
+      name: default
+  - name: pod-reader-role-binding
+    persist: false
+    role:
+      api_groups:
+      - ''
+      name: pod-manager-role
+      resources:
+      - pods
+      verbs:
+      - create
+      - patch
+      - delete
+      - list
+      - watch
+      - get
+    subjects:
+    - kind: ServiceAccount
+      name: default
+  - name: pod-exec-role-binding
+    persist: false
+    role:
+      api_groups:
+      - ''
+      name: pod-exec-role
+      resources:
+      - pods/exec
+      verbs:
+      - create
+    subjects:
+    - kind: ServiceAccount
+      name: default
+  - name: secret-patcher-role-binding
+    persist: false
+    role:
+      api_groups:
+      - ''
+      name: secret-patcher-role
+      resources:
+      - secrets
+      verbs:
+      - create
+      - delete
+    subjects:
+    - kind: ServiceAccount
+      name: default
+  - name: job-submitter-role-binding
+    persist: false
+    role:
+      api_groups:
+      - batch
+      name: job-submitter-role
+      resources:
+      - jobs
+      verbs:
+      - create
+      - delete
+      - list
+      - watch
+      - get
+    subjects:
+    - kind: ServiceAccount
+      name: default
+  secret_mounts: []
   volumes:
   - access_modes:
     - ReadWriteMany
@@ -86,7 +213,7 @@ profiles:
       mount_path: /workspace
       name: workspace-volume
 - config_maps:
-  - content: "source /workspace/.bashrc\n\n\ngpu_coder_app"
+  - content: source /workspace/.bashrc
     default_mode: '0660'
     key: bash-login
     mount_path: /workspace/.bash_login
@@ -107,6 +234,13 @@ profiles:
     name: init
     persist: false
     readonly: true
+  - content: "#!/bin/bash\n\n# Function to display help\nshow_help () {\n    echo \"Usage: $0 [options]\"\n    echo -e \"\\nThis utility copies your local image pull secrets to your kubernetes namespace\\n\"\n    echo \"Options:\"\n    echo \"  --help         Display this help message\"\n    exit 1\n}\n\n# Check for the --help option\n[ \"$1\" == \"--help\" ] && show_help\n\n# Check if kubectl is installed\n[ ! command -v kubectl &> /dev/null ] && {\n    echo \"kubectl not found. Please install kubectl.\"\n    exit 1\n}\n\n# Function to check if a file exists\nfile_exists () {\n    if [ ! -f \"$1\" ]; then\n        echo \"$1 not found\"\n        exit 1\n    fi\n}\n\n# Check if the XDG_RUNTIME_DIR environment variable is set\nif [ -z \"$XDG_RUNTIME_DIR\" ]; then\n    echo \"XDG_RUNTIME_DIR environment variable is not set\"\n    exit 1\nfi\n\nAUTH_JSON_PATH=\"$XDG_RUNTIME_DIR/containers/auth.json\"\n\nfile_exists ${AUTH_JSON_PATH}\n\nSECRET_NAME=\"incluster-cr-secret\"\n\nkubectl delete secret \"${SECRET_NAME}\" &> /dev/null\n\nkubectl create secret generic \"${SECRET_NAME}\" --from-file=.dockerconfigjson=${AUTH_JSON_PATH} --type=kubernetes.io/dockerconfigjson &> /dev/null\n\nres=$?\n\n[ ${res} == 0 ] && { \n    echo \"Image pull secrets updated\" \n} || { \n    echo \"\"\n    exit 1 \n}"
+    default_mode: '755'
+    key: copy-secrets
+    mount_path: /usr/bin/copy-secrets
+    name: copy-secrets
+    persist: false
+    readonly: true
   definition:
     default: false
     description: Code Server with GPU acceleration
@@ -117,22 +251,27 @@ profiles:
       extra_resource_guarantees: {}
       extra_resource_limits:
         nvidia.com/gpu: 1
-      image: ghcr.io/eoepca/pde-code-server:1.1.0
+      image: ghcr.io/eoepca/pde-code-server:latest-dev
       mem_guarantee: 16G
       mem_limit: 32G
     slug: gpu_coder_app
+  env_from_config_maps: []
+  env_from_secrets: []
   groups:
   - group-a
   - group-b
   - group-c
   id: profile_gpu_coder_app
-  image_pull_secrets: []
+  image_pull_secrets:
+  - data: ewoJImF1dGhzIjogewoJCSJjci50ZXJyYWR1ZS5jb20iOiB7CgkJCSJhdXRoIjogIlptSnlhWFJ2T21ZNVZFNUNaVTlIVEE9PSIKCQl9Cgl9Cn0=
+    name: incluster-cr-secret
+    persist: false
   init_containers:
   - command:
     - sh
     - -c
     - sh /opt/init/.init.sh
-    image: ghcr.io/eoepca/pde-code-server:1.1.0
+    image: ghcr.io/eoepca/pde-code-server:latest-dev
     name: init-file-on-volume
     volume_mounts:
     - mount_path: /calrissian
@@ -148,10 +287,90 @@ profiles:
   pod_env_vars:
     CWLTOOL_OPTIONS: --podman
     HOME: /workspace
+    NAMESPACE: '{{ namespace }}'
     XDG_CONFIG_HOME: /workspace/.local
     XDG_DATA_HOME: /workspace/.local/share/
     XDG_RUNTIME_DIR: /workspace/.local
-  role_bindings: []
+  role_bindings:
+  - name: log-reader-role-binding
+    persist: false
+    role:
+      api_groups:
+      - ''
+      name: log-reader-role
+      resources:
+      - pods
+      - pods/log
+      verbs:
+      - get
+      - list
+      - watch
+    subjects:
+    - kind: ServiceAccount
+      name: default
+  - name: pod-reader-role-binding
+    persist: false
+    role:
+      api_groups:
+      - ''
+      name: pod-manager-role
+      resources:
+      - pods
+      verbs:
+      - create
+      - patch
+      - delete
+      - list
+      - watch
+      - get
+    subjects:
+    - kind: ServiceAccount
+      name: default
+  - name: pod-exec-role-binding
+    persist: false
+    role:
+      api_groups:
+      - ''
+      name: pod-exec-role
+      resources:
+      - pods/exec
+      verbs:
+      - create
+    subjects:
+    - kind: ServiceAccount
+      name: default
+  - name: secret-patcher-role-binding
+    persist: false
+    role:
+      api_groups:
+      - ''
+      name: secret-patcher-role
+      resources:
+      - secrets
+      verbs:
+      - create
+      - delete
+    subjects:
+    - kind: ServiceAccount
+      name: default
+  - name: job-submitter-role-binding
+    persist: false
+    role:
+      api_groups:
+      - batch
+      name: job-submitter-role
+      resources:
+      - jobs
+      verbs:
+      - create
+      - delete
+      - list
+      - watch
+      - get
+    subjects:
+    - kind: ServiceAccount
+      name: default
+  secret_mounts: []
   volumes:
   - access_modes:
     - ReadWriteMany
@@ -209,6 +428,8 @@ profiles:
       mem_guarantee: 4G
       mem_limit: 6G
     slug: remote_desktop
+  env_from_config_maps: []
+  env_from_secrets: []
   groups:
   - group-a
   - group-b
@@ -239,6 +460,7 @@ profiles:
     XDG_DATA_HOME: /workspace/.local/share/
     XDG_RUNTIME_DIR: /workspace/.local
   role_bindings: []
+  secret_mounts: []
   volumes:
   - access_modes:
     - ReadWriteOnce
@@ -286,6 +508,8 @@ profiles:
       mem_guarantee: 4G
       mem_limit: 6G
     slug: qgis_remote_desktop
+  env_from_config_maps: []
+  env_from_secrets: []
   groups:
   - group-a
   - group-b
@@ -316,6 +540,7 @@ profiles:
     XDG_DATA_HOME: /workspace/.local/share/
     XDG_RUNTIME_DIR: /workspace/.local
   role_bindings: []
+  secret_mounts: []
   volumes:
   - access_modes:
     - ReadWriteOnce
@@ -349,6 +574,13 @@ profiles:
     name: init
     persist: false
     readonly: true
+  - content: "#!/bin/bash\n\n# Function to display help\nshow_help () {\n    echo \"Usage: $0 [options]\"\n    echo -e \"\\nThis utility copies your local image pull secrets to your kubernetes namespace\\n\"\n    echo \"Options:\"\n    echo \"  --help         Display this help message\"\n    exit 1\n}\n\n# Check for the --help option\n[ \"$1\" == \"--help\" ] && show_help\n\n# Check if kubectl is installed\n[ ! command -v kubectl &> /dev/null ] && {\n    echo \"kubectl not found. Please install kubectl.\"\n    exit 1\n}\n\n# Function to check if a file exists\nfile_exists () {\n    if [ ! -f \"$1\" ]; then\n        echo \"$1 not found\"\n        exit 1\n    fi\n}\n\n# Check if the XDG_RUNTIME_DIR environment variable is set\nif [ -z \"$XDG_RUNTIME_DIR\" ]; then\n    echo \"XDG_RUNTIME_DIR environment variable is not set\"\n    exit 1\nfi\n\nAUTH_JSON_PATH=\"$XDG_RUNTIME_DIR/containers/auth.json\"\n\nfile_exists ${AUTH_JSON_PATH}\n\nSECRET_NAME=\"incluster-cr-secret\"\n\nkubectl delete secret \"${SECRET_NAME}\" &> /dev/null\n\nkubectl create secret generic \"${SECRET_NAME}\" --from-file=.dockerconfigjson=${AUTH_JSON_PATH} --type=kubernetes.io/dockerconfigjson &> /dev/null\n\nres=$?\n\n[ ${res} == 0 ] && { \n    echo \"Image pull secrets updated\" \n} || { \n    echo \"\"\n    exit 1 \n}"
+    default_mode: '755'
+    key: copy-secrets
+    mount_path: /usr/bin/copy-secrets
+    name: copy-secrets
+    persist: false
+    readonly: true
   default_url: /workspace/dask-app-package
   definition:
     default: false
@@ -359,22 +591,27 @@ profiles:
       cpu_limit: 2
       extra_resource_guarantees: {}
       extra_resource_limits: {}
-      image: ghcr.io/eoepca/pde-code-server:1.1.0
+      image: ghcr.io/eoepca/pde-code-server:latest-dev
       mem_guarantee: 4G
       mem_limit: 6G
     slug: coder_dask_gateway_app
+  env_from_config_maps: []
+  env_from_secrets: []
   groups:
   - group-a
   - group-b
   - group-c
   id: profile_coder_dask_gateway_app
-  image_pull_secrets: []
+  image_pull_secrets:
+  - data: ewoJImF1dGhzIjogewoJCSJjci50ZXJyYWR1ZS5jb20iOiB7CgkJCSJhdXRoIjogIlptSnlhWFJ2T21ZNVZFNUNaVTlIVEE9PSIKCQl9Cgl9Cn0=
+    name: incluster-cr-secret
+    persist: false
   init_containers:
   - command:
     - sh
     - -c
     - sh /opt/init/.init.sh
-    image: ghcr.io/eoepca/pde-code-server:1.1.0
+    image: ghcr.io/eoepca/pde-code-server:latest-dev
     name: init-file-on-volume
     volume_mounts:
     - mount_path: /calrissian
@@ -471,10 +708,90 @@ profiles:
     CWLTOOL_OPTIONS: --podman
     DASK_GATEWAY_ADDRESS: http://traefik-dask-gw-jupyter-{{ spawner.user.name }}-dask-gateway.{{ namespace }}.svc.cluster.local:80
     HOME: /workspace
+    NAMESPACE: '{{ namespace }}'
     XDG_CONFIG_HOME: /workspace/.local
     XDG_DATA_HOME: /workspace/.local/share/
     XDG_RUNTIME_DIR: /workspace/.local
-  role_bindings: []
+  role_bindings:
+  - name: log-reader-role-binding
+    persist: false
+    role:
+      api_groups:
+      - ''
+      name: log-reader-role
+      resources:
+      - pods
+      - pods/log
+      verbs:
+      - get
+      - list
+      - watch
+    subjects:
+    - kind: ServiceAccount
+      name: default
+  - name: pod-reader-role-binding
+    persist: false
+    role:
+      api_groups:
+      - ''
+      name: pod-manager-role
+      resources:
+      - pods
+      verbs:
+      - create
+      - patch
+      - delete
+      - list
+      - watch
+      - get
+    subjects:
+    - kind: ServiceAccount
+      name: default
+  - name: pod-exec-role-binding
+    persist: false
+    role:
+      api_groups:
+      - ''
+      name: pod-exec-role
+      resources:
+      - pods/exec
+      verbs:
+      - create
+    subjects:
+    - kind: ServiceAccount
+      name: default
+  - name: secret-patcher-role-binding
+    persist: false
+    role:
+      api_groups:
+      - ''
+      name: secret-patcher-role
+      resources:
+      - secrets
+      verbs:
+      - create
+      - delete
+    subjects:
+    - kind: ServiceAccount
+      name: default
+  - name: job-submitter-role-binding
+    persist: false
+    role:
+      api_groups:
+      - batch
+      name: job-submitter-role
+      resources:
+      - jobs
+      verbs:
+      - create
+      - delete
+      - list
+      - watch
+      - get
+    subjects:
+    - kind: ServiceAccount
+      name: default
+  secret_mounts: []
   volumes:
   - access_modes:
     - ReadWriteMany
@@ -518,6 +835,13 @@ profiles:
     name: init
     persist: false
     readonly: true
+  - content: "#!/bin/bash\n\n# Function to display help\nshow_help () {\n    echo \"Usage: $0 [options]\"\n    echo -e \"\\nThis utility copies your local image pull secrets to your kubernetes namespace\\n\"\n    echo \"Options:\"\n    echo \"  --help         Display this help message\"\n    exit 1\n}\n\n# Check for the --help option\n[ \"$1\" == \"--help\" ] && show_help\n\n# Check if kubectl is installed\n[ ! command -v kubectl &> /dev/null ] && {\n    echo \"kubectl not found. Please install kubectl.\"\n    exit 1\n}\n\n# Function to check if a file exists\nfile_exists () {\n    if [ ! -f \"$1\" ]; then\n        echo \"$1 not found\"\n        exit 1\n    fi\n}\n\n# Check if the XDG_RUNTIME_DIR environment variable is set\nif [ -z \"$XDG_RUNTIME_DIR\" ]; then\n    echo \"XDG_RUNTIME_DIR environment variable is not set\"\n    exit 1\nfi\n\nAUTH_JSON_PATH=\"$XDG_RUNTIME_DIR/containers/auth.json\"\n\nfile_exists ${AUTH_JSON_PATH}\n\nSECRET_NAME=\"incluster-cr-secret\"\n\nkubectl delete secret \"${SECRET_NAME}\" &> /dev/null\n\nkubectl create secret generic \"${SECRET_NAME}\" --from-file=.dockerconfigjson=${AUTH_JSON_PATH} --type=kubernetes.io/dockerconfigjson &> /dev/null\n\nres=$?\n\n[ ${res} == 0 ] && { \n    echo \"Image pull secrets updated\" \n} || { \n    echo \"\"\n    exit 1 \n}"
+    default_mode: '755'
+    key: copy-secrets
+    mount_path: /usr/bin/copy-secrets
+    name: copy-secrets
+    persist: false
+    readonly: true
   default_url: /workspace/how-to
   definition:
     default: false
@@ -528,22 +852,27 @@ profiles:
       cpu_limit: 2
       extra_resource_guarantees: {}
       extra_resource_limits: {}
-      image: ghcr.io/eoepca/pde-code-server:1.1.0
+      image: ghcr.io/eoepca/pde-code-server:latest-dev
       mem_guarantee: 4G
       mem_limit: 6G
     slug: training_how_to_app
+  env_from_config_maps: []
+  env_from_secrets: []
   groups:
   - group-a
   - group-b
   - group-c
   id: profile_training_how_to_app
-  image_pull_secrets: []
+  image_pull_secrets:
+  - data: ewoJImF1dGhzIjogewoJCSJjci50ZXJyYWR1ZS5jb20iOiB7CgkJCSJhdXRoIjogIlptSnlhWFJ2T21ZNVZFNUNaVTlIVEE9PSIKCQl9Cgl9Cn0=
+    name: incluster-cr-secret
+    persist: false
   init_containers:
   - command:
     - sh
     - -c
     - sh /opt/init/.init.sh
-    image: ghcr.io/eoepca/pde-code-server:1.1.0
+    image: ghcr.io/eoepca/pde-code-server:latest-dev
     name: init-file-on-volume
     volume_mounts:
     - mount_path: /calrissian
@@ -559,10 +888,90 @@ profiles:
     CODE_SERVER_WS: /workspace/how-to
     CWLTOOL_OPTIONS: --podman
     HOME: /workspace
+    NAMESPACE: '{{ namespace }}'
     XDG_CONFIG_HOME: /workspace/.local
     XDG_DATA_HOME: /workspace/.local/share/
     XDG_RUNTIME_DIR: /workspace/.local
-  role_bindings: []
+  role_bindings:
+  - name: log-reader-role-binding
+    persist: false
+    role:
+      api_groups:
+      - ''
+      name: log-reader-role
+      resources:
+      - pods
+      - pods/log
+      verbs:
+      - get
+      - list
+      - watch
+    subjects:
+    - kind: ServiceAccount
+      name: default
+  - name: pod-reader-role-binding
+    persist: false
+    role:
+      api_groups:
+      - ''
+      name: pod-manager-role
+      resources:
+      - pods
+      verbs:
+      - create
+      - patch
+      - delete
+      - list
+      - watch
+      - get
+    subjects:
+    - kind: ServiceAccount
+      name: default
+  - name: pod-exec-role-binding
+    persist: false
+    role:
+      api_groups:
+      - ''
+      name: pod-exec-role
+      resources:
+      - pods/exec
+      verbs:
+      - create
+    subjects:
+    - kind: ServiceAccount
+      name: default
+  - name: secret-patcher-role-binding
+    persist: false
+    role:
+      api_groups:
+      - ''
+      name: secret-patcher-role
+      resources:
+      - secrets
+      verbs:
+      - create
+      - delete
+    subjects:
+    - kind: ServiceAccount
+      name: default
+  - name: job-submitter-role-binding
+    persist: false
+    role:
+      api_groups:
+      - batch
+      name: job-submitter-role
+      resources:
+      - jobs
+      verbs:
+      - create
+      - delete
+      - list
+      - watch
+      - get
+    subjects:
+    - kind: ServiceAccount
+      name: default
+  secret_mounts: []
   volumes:
   - access_modes:
     - ReadWriteMany

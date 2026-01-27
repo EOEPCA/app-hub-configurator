@@ -3,7 +3,6 @@ from configurator.apps.coder.base_coder import BaseCoderProfile
 
 
 class TrainingHowToProfile(BaseCoderProfile):
-
     default_url = "/workspace/how-to"
 
     display_name = "Application Package CWL How-To's"
@@ -22,9 +21,9 @@ class TrainingHowToProfile(BaseCoderProfile):
     init_script_path = os.path.join(base_path, f"config_maps/{slug}/init.sh")
 
     def get_pod_env_vars(self) -> dict:
-
-        env = {**super().get_pod_env_vars(),            
-                "CODE_SERVER_WS": "/workspace/how-to",
-                }
+        env = {
+            **super().get_pod_env_vars(),
+            "CODE_SERVER_WS": "/workspace/how-to",
+        }
 
         return env

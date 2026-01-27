@@ -30,13 +30,20 @@ deploy:
         createNamespace: true
         version: 1.19.0
     hooks:
-      before: []
-        
+      before:
+        - host:
+            command: ["sh", "-c", "helm repo add crossplane-stable https://charts.crossplane.io/stable && helm repo update || helm repo update"]
+        - host:
+            command: ["sh", "-c", ".skaffold/scripts/get-crds.sh"]
+      after:
+        - host:
+            command: ["sh", "-c", ".skaffold/scripts/install-providers.sh"]
+
 manifests:
   rawYaml:
-  - manifests/cluster-role-binding.yaml
-  - manifests/script.yaml
-  - manifests/job.yaml
+  - .skaffold/manifests/cluster-role-binding.yaml
+  - .skaffold/manifests/script.yaml
+  - .skaffold/manifests/job.yaml
 
 portForward:
 - resourceType: service
@@ -55,7 +62,7 @@ profiles:
         value: ghcr.io/eoepca/application-hub
       - op: add
         path: /deploy/helm/releases/0/setValueTemplates/jupyterhub.hub.image.tag
-        value: 1.5.1
+        value: 1.5.2
       - op: add
         path: /deploy/helm/releases/0/setFiles/configYml
         value: config.yaml

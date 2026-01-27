@@ -1,6 +1,6 @@
-
 import os
 from configurator.apps.remote_desktop import BaseRemoteDesktopProfile
+
 
 class DesktopProfile(BaseRemoteDesktopProfile):
     display_name = "Remote Desktop"
@@ -11,6 +11,7 @@ class DesktopProfile(BaseRemoteDesktopProfile):
     bash_login_path = os.path.join(base_path, f"config_maps/{slug}/bash-login")
     bashrc_path = os.path.join(base_path, f"config_maps/{slug}/bash-rc")
     init_script_path = os.path.join(base_path, f"config_maps/{slug}/init.sh")
+
 
 class DesktopQgisProfile(BaseRemoteDesktopProfile):
     display_name = "QGIS Remote Desktop"

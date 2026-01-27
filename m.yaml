@@ -1,0 +1,20 @@
+piVersion: helm.crossplane.io/v1beta1
+kind: Release
+metadata:
+  name: localstack-jupyter-alice
+  namespace: "jupyter-alice"
+spec:
+  forProvider:
+    chart:
+      name: localstack
+      version: "0.6.20"
+      repository: https://localstack.github.io/helm-charts
+    namespace: "jupyter-alice"
+    skipCreateNamespace: true
+    values:
+      service:
+        type: ClusterIP
+      serviceAccount:
+        create: true
+  providerConfigRef:
+    name: helm-provider

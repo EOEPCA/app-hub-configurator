@@ -11,14 +11,11 @@ class ProfileRegistry:
         slug = profile_cls.slug
 
         if not slug:
-            raise ValueError(
-                f"{profile_cls.__name__} must define a non-empty slug"
-            )
+            raise ValueError(f"{profile_cls.__name__} must define a non-empty slug")
 
         if slug in self._profiles:
             raise ValueError(
-                f"Duplicate profile slug '{slug}' "
-                f"({profile_cls.__name__})"
+                f"Duplicate profile slug '{slug}' ({profile_cls.__name__})"
             )
 
         self._profiles[slug] = profile_cls

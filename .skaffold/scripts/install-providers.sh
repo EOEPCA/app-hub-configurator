@@ -53,7 +53,7 @@ START_TIME=$(date +%s)
 
 # helm provider
 echo "Applying Helm provider configuration..."
-kubectl apply -f provider/helm.yaml || exit 1
+kubectl apply -f .skaffold/provider/helm.yaml || exit 1
 
 # invoke function to check if provider is healthy
 check_provider_health helm $TIMEOUT $INTERVAL || exit 2
@@ -61,15 +61,15 @@ check_provider_health helm $TIMEOUT $INTERVAL || exit 2
 check_crd_established providerconfigs.helm.crossplane.io $TIMEOUT || exit 2
 
 echo "Applying helm-provider-config.yaml..."
-kubectl apply -f provider-config/helm.yaml || exit 3
+kubectl apply -f .skaffold/provider-config/helm.yaml || exit 3
 
 # kubernetes provider
 echo "Applying Kubernetes provider configuration..."
-kubectl apply -f provider/kubernetes.yaml || exit 4
+kubectl apply -f .skaffold/provider/kubernetes.yaml || exit 4
 
 check_provider_health kubernetes $TIMEOUT $INTERVAL
 
 check_crd_established providerconfigs.kubernetes.crossplane.io $TIMEOUT || exit 5
 
 echo "Applying kubernetes-provider-config.yaml..."
-kubectl apply -f provider-config/kubernetes.yaml || exit 6
+kubectl apply -f .skaffold/provider-config/kubernetes.yaml || exit 6

@@ -1,10 +1,18 @@
-from configurator.models import ConfigMap, InitContainer, VolumeMount, InitContainerVolumeMount, Manifest
+from configurator.models import (
+    ConfigMap,
+    InitContainer,
+    VolumeMount,
+    InitContainerVolumeMount,
+    Manifest,
+)
 from typing import List
 from ruamel.yaml.scalarstring import LiteralScalarString
 import yaml
 
+
 def literal(s: str):
     return LiteralScalarString(s)
+
 
 def literalize_multiline(obj):
     """
@@ -19,14 +27,14 @@ def literalize_multiline(obj):
         return [literalize_multiline(i) for i in obj]
 
     if isinstance(obj, dict):
-        return {
-            k: literalize_multiline(v)
-            for k, v in obj.items()
-        }
+        return {k: literalize_multiline(v) for k, v in obj.items()}
 
     return obj
 
-def create_init_container(image: str, volume_mounts: List[VolumeMount]) -> InitContainer:
+
+def create_init_container(
+    image: str, volume_mounts: List[VolumeMount]
+) -> InitContainer:
     init_context_volume_mount = InitContainerVolumeMount(
         mount_path="/opt/init/.init.sh", name="init", sub_path="init"
     )
@@ -41,15 +49,25 @@ def create_init_container(image: str, volume_mounts: List[VolumeMount]) -> InitC
         ],
     )
 
-def get_config_map(path: str, name: str, key: str, mount_path: str, readonly: bool = True, persist: bool = True, default_mode: str = "0660") -> ConfigMap:
 
+def get_config_map(
+    path: str,
+    name: str,
+    key: str,
+    mount_path: str,
+    readonly: bool = True,
+    persist: bool = True,
+    default_mode: str = "0660",
+) -> ConfigMap:
     try:
         with open(path, "r") as f:
             content = f.read()
     except FileNotFoundError:
-        print(f"Warning: Config map file {name} not found in {path}/config_maps/. Skipping.")
+        print(
+            f"Warning: Config map file {name} not found in {path}/config_maps/. Skipping."
+        )
         return None
-    
+
     return ConfigMap(
         name=name,
         key=key,
@@ -60,7 +78,10 @@ def get_config_map(path: str, name: str, key: str, mount_path: str, readonly: bo
         default_mode=default_mode,
     )
 
-def get_bash_login_config_map(path: str, readonly: bool = True, persist: bool = True) -> ConfigMap:
+
+def get_bash_login_config_map(
+    path: str, readonly: bool = True, persist: bool = True
+) -> ConfigMap:
     return get_config_map(
         path=path,
         name="bash-login",
@@ -70,7 +91,10 @@ def get_bash_login_config_map(path: str, readonly: bool = True, persist: bool = 
         persist=persist,
     )
 
-def get_bashrc_config_map(path: str, readonly: bool = True, persist: bool = True) -> ConfigMap:
+
+def get_bashrc_config_map(
+    path: str, readonly: bool = True, persist: bool = True
+) -> ConfigMap:
     return get_config_map(
         path=path,
         name="bash-rc",
@@ -80,7 +104,10 @@ def get_bashrc_config_map(path: str, readonly: bool = True, persist: bool = True
         persist=persist,
     )
 
-def get_init_script_config_map(path: str, readonly: bool = True, persist: bool = True) -> ConfigMap:
+
+def get_init_script_config_map(
+    path: str, readonly: bool = True, persist: bool = True
+) -> ConfigMap:
     return get_config_map(
         path=path,
         name="init",
@@ -91,12 +118,13 @@ def get_init_script_config_map(path: str, readonly: bool = True, persist: bool =
         default_mode="0660",
     )
 
+
 def load_manifests(*, name: str, key: str, file_path: str) -> Manifest:
     with open(file_path, "r") as f:
-        content = [
-            literalize_multiline(doc)
-            for doc in yaml.safe_load_all(f)
-        ]
+        content = list(yaml.safe_load_all(f))
+
+    # Remove empty docs caused by ---
+    content = [doc for doc in content if doc is not None]
 
     return Manifest(
         name=name,

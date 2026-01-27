@@ -1,6 +1,11 @@
 from configurator.apps import profile_registry
 from .base_remote_desktop import BaseRemoteDesktopProfile
-from .remote_desktop_profiles import DesktopProfile, DesktopQgisProfile, DesktopPanoplyProfile
+from .remote_desktop_profiles import (
+    DesktopProfile,
+    DesktopQgisProfile,
+    DesktopPanoplyProfile,
+)
+
 __all__ = [
     "BaseRemoteDesktopProfile",
     "DesktopProfile",

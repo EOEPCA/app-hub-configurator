@@ -6,6 +6,9 @@ from configurator.models import (
     KubespawnerOverride,
     Volume,
     Manifest,
+    RoleBinding,
+    ConfigMap,
+    SecretMount
 )
 from configurator.apps.app_helpers import (
     get_bash_login_config_map,
@@ -65,11 +68,9 @@ class BaseAppProfile:
         self.role_bindings = role_bindings or []
         self.image_pull_secrets = image_pull_secrets or []
         self.node_selector = node_selector or {}
-        
+
         user_volumes = volumes or []
         self.volumes = self.get_default_volumes() + user_volumes
-
-
 
     # ---- hooks -------------------------------------------------
 
@@ -83,6 +84,24 @@ class BaseAppProfile:
         return []
 
     def get_manifests(self) -> list[Manifest]:
+        return []
+
+    def get_role_bindings(self) -> list[RoleBinding]:
+        return []
+
+    def get_config_maps(self) -> list[ConfigMap]:
+        return []
+
+    def get_image_pull_secrets(self) -> list[str]:
+        return []
+    
+    def get_env_config_maps(self) -> list[str]:
+        return []
+    
+    def get_env_secrets(self) -> list[str]:
+        return []
+
+    def get_secret_mounts(self) -> list[SecretMount]:
         return []
 
     # ---- internals --------------------------------------------
@@ -122,6 +141,7 @@ class BaseAppProfile:
         config_maps = self._build_config_maps()
         init_cms, init_containers = self._build_init()
         config_maps.extend(init_cms)
+        config_maps.extend(self.get_config_maps())
 
         profile = Profile(
             id=f"profile_{self.slug}",
@@ -144,11 +164,13 @@ class BaseAppProfile:
             volumes=self.volumes,
             config_maps=config_maps,
             init_containers=init_containers,
-            role_bindings=self.role_bindings,
-            image_pull_secrets=self.image_pull_secrets,
+            role_bindings=self.get_role_bindings(),
+            image_pull_secrets=self.get_image_pull_secrets(),
             pod_env_vars=self.get_pod_env_vars(),
             manifests=self.get_manifests(),
-
+            env_from_config_maps=self.get_env_config_maps(),
+            env_from_secrets=self.get_env_secrets(),
+            secret_mounts=self.get_secret_mounts(),
         )
 
         extra = self.get_extra_resource_limits()

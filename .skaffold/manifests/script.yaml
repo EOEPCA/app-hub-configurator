@@ -6,8 +6,7 @@ metadata:
 data:
   init.sh: |
     #!/bin/bash
-    apt update
-    apt install -y jq curl
+    apt-get update && apt-get install -y --no-install-recommends curl yq
 
     token=`curl -X POST -d '{"auth": {"username": "jovyan", "token": "12345"}}' http://application-hub-hub.jupyter.svc.cluster.local:8081/hub/api/users/jovyan/tokens | jq -r '.token'`
 

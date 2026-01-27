@@ -9,7 +9,7 @@ spec:
     spec:
       containers:
       - name: hub-content-init
-        image: ubuntu:22.04
+        image: ubuntu:24.04
         command: ["/bin/bash", "-c"]
         args: ["/init/init.sh"]
         volumeMounts:
