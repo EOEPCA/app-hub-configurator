@@ -33,7 +33,10 @@ class CoderProfile(BaseCoderProfile):
     
     def get_env_secrets(self) -> list[str]:
         return ["localstack-s3-secret"] + super().get_env_secrets()
-    
+
+    def get_env_config_maps(self) -> list[str]:
+        return ["env-var-configmap"] + super().get_env_config_maps()
+
 class GpuCoderProfile(BaseCoderProfile):
     display_name = "GPU Code Server"
     description = "Code Server with GPU acceleration"

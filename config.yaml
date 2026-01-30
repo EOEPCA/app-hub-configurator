@@ -22,7 +22,7 @@ profiles:
     persist: false
     readonly: true
   - content: "#!/bin/bash\n\n# Function to display help\nshow_help () {\n    echo \"Usage: $0 [options]\"\n    echo -e \"\\nThis utility copies your local image pull secrets to your kubernetes namespace\\n\"\n    echo \"Options:\"\n    echo \"  --help         Display this help message\"\n    exit 1\n}\n\n# Check for the --help option\n[ \"$1\" == \"--help\" ] && show_help\n\n# Check if kubectl is installed\n[ ! command -v kubectl &> /dev/null ] && {\n    echo \"kubectl not found. Please install kubectl.\"\n    exit 1\n}\n\n# Function to check if a file exists\nfile_exists () {\n    if [ ! -f \"$1\" ]; then\n        echo \"$1 not found\"\n        exit 1\n    fi\n}\n\n# Check if the XDG_RUNTIME_DIR environment variable is set\nif [ -z \"$XDG_RUNTIME_DIR\" ]; then\n    echo \"XDG_RUNTIME_DIR environment variable is not set\"\n    exit 1\nfi\n\nAUTH_JSON_PATH=\"$XDG_RUNTIME_DIR/containers/auth.json\"\n\nfile_exists ${AUTH_JSON_PATH}\n\nSECRET_NAME=\"incluster-cr-secret\"\n\nkubectl delete secret \"${SECRET_NAME}\" &> /dev/null\n\nkubectl create secret generic \"${SECRET_NAME}\" --from-file=.dockerconfigjson=${AUTH_JSON_PATH} --type=kubernetes.io/dockerconfigjson &> /dev/null\n\nres=$?\n\n[ ${res} == 0 ] && { \n    echo \"Image pull secrets updated\" \n} || { \n    echo \"\"\n    exit 1 \n}"
-    default_mode: '755'
+    default_mode: '0755'
     key: copy-secrets
     mount_path: /usr/bin/copy-secrets
     name: copy-secrets
@@ -41,7 +41,8 @@ profiles:
       mem_guarantee: 4G
       mem_limit: 6G
     slug: coder_app
-  env_from_config_maps: []
+  env_from_config_maps:
+  - env-var-configmap
   env_from_secrets:
   - localstack-s3-secret
   groups:
@@ -100,6 +101,14 @@ profiles:
         name: localstack-s3-secret
         namespace: '{{ namespace }}'
       type: Opaque
+    - apiVersion: v1
+      data:
+        ENV_VAR1: value1
+        ENV_VAR2: value2
+      kind: ConfigMap
+      metadata:
+        name: env-var-configmap
+        namespace: '{{ namespace }}'
     key: local-stack
     name: local-stack
     persist: false
@@ -235,7 +244,7 @@ profiles:
     persist: false
     readonly: true
   - content: "#!/bin/bash\n\n# Function to display help\nshow_help () {\n    echo \"Usage: $0 [options]\"\n    echo -e \"\\nThis utility copies your local image pull secrets to your kubernetes namespace\\n\"\n    echo \"Options:\"\n    echo \"  --help         Display this help message\"\n    exit 1\n}\n\n# Check for the --help option\n[ \"$1\" == \"--help\" ] && show_help\n\n# Check if kubectl is installed\n[ ! command -v kubectl &> /dev/null ] && {\n    echo \"kubectl not found. Please install kubectl.\"\n    exit 1\n}\n\n# Function to check if a file exists\nfile_exists () {\n    if [ ! -f \"$1\" ]; then\n        echo \"$1 not found\"\n        exit 1\n    fi\n}\n\n# Check if the XDG_RUNTIME_DIR environment variable is set\nif [ -z \"$XDG_RUNTIME_DIR\" ]; then\n    echo \"XDG_RUNTIME_DIR environment variable is not set\"\n    exit 1\nfi\n\nAUTH_JSON_PATH=\"$XDG_RUNTIME_DIR/containers/auth.json\"\n\nfile_exists ${AUTH_JSON_PATH}\n\nSECRET_NAME=\"incluster-cr-secret\"\n\nkubectl delete secret \"${SECRET_NAME}\" &> /dev/null\n\nkubectl create secret generic \"${SECRET_NAME}\" --from-file=.dockerconfigjson=${AUTH_JSON_PATH} --type=kubernetes.io/dockerconfigjson &> /dev/null\n\nres=$?\n\n[ ${res} == 0 ] && { \n    echo \"Image pull secrets updated\" \n} || { \n    echo \"\"\n    exit 1 \n}"
-    default_mode: '755'
+    default_mode: '0755'
     key: copy-secrets
     mount_path: /usr/bin/copy-secrets
     name: copy-secrets
@@ -487,7 +496,7 @@ profiles:
     name: bash-rc
     persist: false
     readonly: true
-  - content: echo "Initializing remote desktop environment..."
+  - content: "echo \"Initializing remote desktop environment...\"\n\nmkdir -p /workspace/.local/share/QGIS/QGIS3/\n\nchmod -R 700 /workspace/.local\n\ncat > /workspace/.local/share/QGIS/QGIS3/startup.py <<'EOF'\nfrom qgis.PyQt.QtCore import QSettings, QTimer\n\ndef xyz_exists(name: str) -> bool:\n    s = QSettings()\n    return s.contains(f\"qgis/connections-xyz/{name}/url\")\n\ndef wms_exists(name: str) -> bool:\n    s = QSettings()\n    return s.contains(f\"qgis/connections-wms/{name}/url\")\n\ndef ensure_xyz(name: str, url: str, zmin: int = 0, zmax: int = 19, hidden: bool = False):\n    print(f\"[startup] {'Creating' if not xyz_exists(name) else 'Updating'} XYZ: {name}\")\n    s = QSettings()\n    base = f\"qgis/connections-xyz/{name}\"\n    s.setValue(f\"{base}/url\", url)\n    s.setValue(f\"{base}/zmin\", zmin)\n    s.setValue(f\"{base}/zmax\", zmax)\n    s.setValue(f\"{base}/hidden\", hidden)\n\ndef ensure_wms(name: str, url: str, hidden: bool = False):\n    print(f\"[startup] {'Creating' if not wms_exists(name) else 'Updating'} WMS: {name}\")\n    s = QSettings()\n    base = f\"qgis/connections-wms/{name}\"\n    s.setValue(f\"{base}/url\", url)\n    s.setValue(f\"{base}/hidden\", hidden)\n\ndef _refresh_browser():\n    try:\n        from qgis.utils import iface\n        iface.browserModel().refresh()\n        print(\"[startup] Browser model refreshed\")\n    except Exception as e:\n        print(f\"[startup] Browser refresh skipped: {e}\")\n\ndef apply_standard_connections():\n    # WMS\n    ensure_wms(\"Copernicus Urban Atlas\",\n               \"https://image.discomap.eea.europa.eu/arcgis/services/UrbanAtlas/UA_UrbanAtlas_2018/MapServer/WMSServer\")\n    ensure_wms(\"Corine Land Cover 2018\",\n               \"https://image.discomap.eea.europa.eu/arcgis/services/Corine/CLC2018_WM/MapServer/WMSServer\")\n    ensure_wms(\"Coastal Zones Land Cover Land Use 2018\",\n               \"https://image.discomap.eea.europa.eu/arcgis/services/CoastalZones/CZ_CoastalZones_2018/MapServer/WMSServer\")\n\n    # XYZ\n    ensure_xyz(\"OpenTopoMap\", \"https://tile.opentopomap.org/{z}/{x}/{y}.png\", 0, 17)\n    ensure_xyz(\"Google Dynamic World\", \"https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}\", 0, 20)\n    ensure_xyz(\"CartoDB Dark Matter\", \"https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png\", 0, 19)\n\n    # Refresh browser a few times (sometimes needed)\n    _refresh_browser()\n    QTimer.singleShot(1500, _refresh_browser)\n    QTimer.singleShot(4000, _refresh_browser)\n\n    print(\"[startup] NOTE: provider connection reload API not available in this build; \"\n          \"XYZ/WMS may only appear after restart.\")\n\nQTimer.singleShot(2000, apply_standard_connections)\n\n\nEOF"
     default_mode: '0660'
     key: init
     mount_path: /opt/init/.init.sh
@@ -553,6 +562,181 @@ profiles:
       mount_path: /workspace
       name: workspace-volume
 - config_maps:
+  - content: "source /workspace/.bashrc\n\n\naaaa"
+    default_mode: '0660'
+    key: bash-login
+    mount_path: /workspace/.bash_login
+    name: bash-login
+    persist: false
+    readonly: true
+  - content: "alias ll=\"ls -l\"\n\n# >>> conda initialize >>>\n# !! Contents within this block are managed by 'conda init' !!\n__conda_setup=\"$('/opt/conda/bin/conda' 'shell.bash' 'hook' 2> /dev/null)\"\nif [ $? -eq 0 ]; then\n    eval \"$__conda_setup\"\nelse\n    if [ -f \"/opt/conda/etc/profile.d/conda.sh\" ]; then\n        . \"/opt/conda/etc/profile.d/conda.sh\"\n    else\n        export PATH=\"/srv/conda/bin:$PATH\"\n    fi\nfi\nunset __conda_setup\n\nif [ -f \"/opt/conda/etc/profile.d/mamba.sh\" ]; then\n    . \"/opt/conda/etc/profile.d/mamba.sh\"\nfi\n# <<< conda initialize <<<"
+    default_mode: '0660'
+    key: bash-rc
+    mount_path: /workspace/.bashrc
+    name: bash-rc
+    persist: false
+    readonly: true
+  - content: echo "Initializing remote desktop environment..."
+    default_mode: '0660'
+    key: init
+    mount_path: /opt/init/.init.sh
+    name: init
+    persist: false
+    readonly: true
+  default_url: /desktop
+  definition:
+    default: false
+    description: Linux desktop environment with Panoply via web browser
+    display_name: Panoply Remote Desktop
+    kubespawner_override:
+      cpu_guarantee: 1
+      cpu_limit: 2
+      extra_resource_guarantees: {}
+      extra_resource_limits: {}
+      image: ghcr.io/eoepca/iga-remote-desktop-panoply:latest-dev
+      mem_guarantee: 4G
+      mem_limit: 6G
+    slug: panoply_remote_desktop
+  env_from_config_maps: []
+  env_from_secrets: []
+  groups:
+  - group-a
+  - group-b
+  - group-c
+  id: profile_panoply_remote_desktop
+  image_pull_secrets: []
+  init_containers:
+  - command:
+    - sh
+    - -c
+    - sh /opt/init/.init.sh
+    image: ghcr.io/eoepca/iga-remote-desktop-panoply:latest-dev
+    name: init-file-on-volume
+    volume_mounts:
+    - mount_path: /workspace
+      name: workspace-volume
+    - mount_path: /opt/init/.init.sh
+      name: init
+      sub_path: init
+  manifests: []
+  node_selector: {}
+  pod_env_vars:
+    CONDARC: /workspace/.condarc
+    CONDA_ENVS_PATH: /workspace/.envs
+    CWLTOOL_OPTIONS: --podman
+    HOME: /workspace
+    XDG_CONFIG_HOME: /workspace/.local
+    XDG_DATA_HOME: /workspace/.local/share/
+    XDG_RUNTIME_DIR: /workspace/.local
+  role_bindings: []
+  secret_mounts: []
+  volumes:
+  - access_modes:
+    - ReadWriteOnce
+    claim_name: workspace-claim
+    name: workspace-volume
+    persist: true
+    size: 20Gi
+    storage_class: standard
+    volume_mount:
+      mount_path: /workspace
+      name: workspace-volume
+- config_maps:
+  - content: "source /workspace/.bashrc\n\n"
+    default_mode: '0660'
+    key: bash-login
+    mount_path: /workspace/.bash_login
+    name: bash-login
+    persist: false
+    readonly: true
+  - content: "alias ll=\"ls -l\"\n"
+    default_mode: '0660'
+    key: bash-rc
+    mount_path: /workspace/.bashrc
+    name: bash-rc
+    persist: false
+    readonly: true
+  - content: "echo \"Initializing remote desktop with SNAP environment...\"\n"
+    default_mode: '0660'
+    key: init
+    mount_path: /opt/init/.init.sh
+    name: init
+    persist: false
+    readonly: true
+  - content: "# ${HOME} will be replaced by user home directory according to platform\ndefault_userdir=\"/workspace/.snap/system\"\n\n# Options used by the launcher by default,  can be overridden by explicit command line switches\ndefault_options=\"--branding snap --locale en_GB -J-Xverify:none -J-Xms256M -J-Xmx10G -J-Dnetbeans.mainclass=org.esa.snap.main.Main -J-Dsun.java2d.noddraw=true -J-Dsun.awt.nopixfmt=true -J-Dsun.java2d.dpiaware=false -J-Djava.security.manager=allow -J--add-opens=java.base/java.net=ALL-UNNAMED -J--add-opens=java.desktop/sun.awt=ALL-UNNAMED -J--add-opens=java.base/java.security=ALL-UNNAMED -J--add-opens=java.desktop/javax.swing=ALL-UNNAMED -J--add-opens=java.desktop/com.sun.imageio.plugins.jpeg=ALL-UNNAMED -J--add-opens=java.desktop/sun.java2d=ALL-UNNAMED\"\n# for development purposes you may wish to append: -J-Dnetbeans.logger.console=true -J-ea\n\n# Default location of JRE\njdkhome=\"./jre\"\n\n# Extra cluster paths separated by colon ':'\n#extra_clusters=\"\""
+    default_mode: '0644'
+    key: snap.conf
+    mount_path: /usr/local/snap/etc/snap.conf
+    name: snap-conf
+    persist: false
+    readonly: true
+  - content: "# ${HOME} will be replaced by user home directory according to platform\n####################################################################################\n# Configuration for the SNAP Engine\n# All properties described here can also be passed to the VM as system\n# properties using the standard Java\n#   -D<property>=<value>\n# syntax. In addition, it is possible to use macros of the form\n#   ${<property>}\n# within a value. Macros will expand to the value of the referred file property,\n# system property, or environment variable.\n####################################################################################\n\n# SNAP application installation directory.\n# Only used in Engine mode. In Desktop mode, setting this property has no effect.\n#\nsnap.home=/usr/local/snap/\n\n# SNAP application data directory\n# Used in Engine and Desktop mode to configure the data directory of SNAP. Its default\n# value is ${USER_HOME}/.snap/.\n# In Desktop mode this value can also be set by the --userdir option argument passed\n# to the snap executable e.g. by adding it to the default_option in\n# ${snap-home}/etc/snap.conf file.\n#\nsnap.userdir=/workspace/.snap\n\n# SNAP Python interpreter executable\n# Only used, if Python extensions are used or if you want to use Python to access SNAP code.\n# Usually this variable is read from file ${snap.userdir}/snap-python/snappy.properties\n# which gets created as a result of the ${snap-home}/bin/snappy-conf command-line tool.\n#\n#snap.pythonExecutable = /usr/bin/python3\n\n# tileCache and tileSize jai properties affect graph processing and image rendering\n# Tile cache size [Mb]\n#snap.jai.tileCacheSize=1024\n# Default tile size in pixels\nsnap.jai.defaultTileSize=512\n# number of CPU cores used for image rendering and graph processing\n# allow this to default to Runtime.getRuntime().availableProcessors()\n#snap.parallelism = 1\n# Enable or disable the prefetch of tiles. Default is true.\nsnap.jai.prefetchTiles=true\n# Custom color palettes based on band unit\n# Palettes must be installed in ${ApplicationDataDir}/snap-rcp/auxdata/color_palettes\n# Property keys must start with snap.color-palette.unit. and end with the unit value\nsnap.color-palette.unit.phase=cubehelix_cycle.cpd\nsnap.color-palette.unit.meters=terrain.cpd\nsnap.color-palette.unit.m/day=velocity.cpd\nsnap.color-palette.unit.m^3water/m^3soil=jet.cpd\nsnap.color-palette.unit.tree_cover_percent=tree_cover_percent.cpd\nsnap.color-palette.unit.log_ratio=change_log_ratio.cpd\nsnap.color-palette.unit.ratio=change_log_ratio.cpd\nsnap.color-palette.unit.diff=change_log_ratio.cpd\n\n# Operators unsupported or renamed\nsnap.gpf.unsupported.CoarseFine-Coregistration = \"Operator CoarseFine-Coregistration replaced by Cross-Correlation\"\nsnap.gpf.unsupported.GCP-Selection = \"Operator GCP-Selection replaced by Cross-Correlation\"\nsnap.gpf.unsupported.LinearToFromdB = \"Operator LinearTodB renamed to LinearToFromdB\"\n\n# Online help related parameters\nsnap.online.help.url=https://step.esa.int/main/doc/online-help/\n"
+    default_mode: '0644'
+    key: snap.properties
+    mount_path: /usr/local/snap/etc/snap.properties
+    name: snap-properties
+    persist: false
+    readonly: true
+  default_url: /desktop
+  definition:
+    default: false
+    description: Linux desktop environment with Snap via web browser
+    display_name: Snap Remote Desktop
+    kubespawner_override:
+      cpu_guarantee: 1
+      cpu_limit: 2
+      extra_resource_guarantees: {}
+      extra_resource_limits: {}
+      image: ghcr.io/eoepca/iga-remote-desktop-snap:latest-dev
+      mem_guarantee: 4G
+      mem_limit: 6G
+    slug: snap_remote_desktop
+  env_from_config_maps: []
+  env_from_secrets: []
+  groups:
+  - group-a
+  - group-b
+  - group-c
+  id: profile_snap_remote_desktop
+  image_pull_secrets: []
+  init_containers:
+  - command:
+    - sh
+    - -c
+    - sh /opt/init/.init.sh
+    image: ghcr.io/eoepca/iga-remote-desktop-snap:latest-dev
+    name: init-file-on-volume
+    volume_mounts:
+    - mount_path: /workspace
+      name: workspace-volume
+    - mount_path: /opt/init/.init.sh
+      name: init
+      sub_path: init
+  manifests: []
+  node_selector: {}
+  pod_env_vars:
+    CONDARC: /workspace/.condarc
+    CONDA_ENVS_PATH: /workspace/.envs
+    CWLTOOL_OPTIONS: --podman
+    HOME: /workspace
+    LIBGL_ALWAYS_SOFTWARE: '1'
+    XDG_CONFIG_HOME: /workspace/.local
+    XDG_DATA_HOME: /workspace/.local/share/
+    XDG_RUNTIME_DIR: /workspace/.local
+  role_bindings: []
+  secret_mounts: []
+  volumes:
+  - access_modes:
+    - ReadWriteOnce
+    claim_name: workspace-claim
+    name: workspace-volume
+    persist: true
+    size: 20Gi
+    storage_class: standard
+    volume_mount:
+      mount_path: /workspace
+      name: workspace-volume
+- config_maps:
   - content: source /workspace/.bashrc
     default_mode: '0660'
     key: bash-login
@@ -575,7 +759,7 @@ profiles:
     persist: false
     readonly: true
   - content: "#!/bin/bash\n\n# Function to display help\nshow_help () {\n    echo \"Usage: $0 [options]\"\n    echo -e \"\\nThis utility copies your local image pull secrets to your kubernetes namespace\\n\"\n    echo \"Options:\"\n    echo \"  --help         Display this help message\"\n    exit 1\n}\n\n# Check for the --help option\n[ \"$1\" == \"--help\" ] && show_help\n\n# Check if kubectl is installed\n[ ! command -v kubectl &> /dev/null ] && {\n    echo \"kubectl not found. Please install kubectl.\"\n    exit 1\n}\n\n# Function to check if a file exists\nfile_exists () {\n    if [ ! -f \"$1\" ]; then\n        echo \"$1 not found\"\n        exit 1\n    fi\n}\n\n# Check if the XDG_RUNTIME_DIR environment variable is set\nif [ -z \"$XDG_RUNTIME_DIR\" ]; then\n    echo \"XDG_RUNTIME_DIR environment variable is not set\"\n    exit 1\nfi\n\nAUTH_JSON_PATH=\"$XDG_RUNTIME_DIR/containers/auth.json\"\n\nfile_exists ${AUTH_JSON_PATH}\n\nSECRET_NAME=\"incluster-cr-secret\"\n\nkubectl delete secret \"${SECRET_NAME}\" &> /dev/null\n\nkubectl create secret generic \"${SECRET_NAME}\" --from-file=.dockerconfigjson=${AUTH_JSON_PATH} --type=kubernetes.io/dockerconfigjson &> /dev/null\n\nres=$?\n\n[ ${res} == 0 ] && { \n    echo \"Image pull secrets updated\" \n} || { \n    echo \"\"\n    exit 1 \n}"
-    default_mode: '755'
+    default_mode: '0755'
     key: copy-secrets
     mount_path: /usr/bin/copy-secrets
     name: copy-secrets
@@ -836,7 +1020,7 @@ profiles:
     persist: false
     readonly: true
   - content: "#!/bin/bash\n\n# Function to display help\nshow_help () {\n    echo \"Usage: $0 [options]\"\n    echo -e \"\\nThis utility copies your local image pull secrets to your kubernetes namespace\\n\"\n    echo \"Options:\"\n    echo \"  --help         Display this help message\"\n    exit 1\n}\n\n# Check for the --help option\n[ \"$1\" == \"--help\" ] && show_help\n\n# Check if kubectl is installed\n[ ! command -v kubectl &> /dev/null ] && {\n    echo \"kubectl not found. Please install kubectl.\"\n    exit 1\n}\n\n# Function to check if a file exists\nfile_exists () {\n    if [ ! -f \"$1\" ]; then\n        echo \"$1 not found\"\n        exit 1\n    fi\n}\n\n# Check if the XDG_RUNTIME_DIR environment variable is set\nif [ -z \"$XDG_RUNTIME_DIR\" ]; then\n    echo \"XDG_RUNTIME_DIR environment variable is not set\"\n    exit 1\nfi\n\nAUTH_JSON_PATH=\"$XDG_RUNTIME_DIR/containers/auth.json\"\n\nfile_exists ${AUTH_JSON_PATH}\n\nSECRET_NAME=\"incluster-cr-secret\"\n\nkubectl delete secret \"${SECRET_NAME}\" &> /dev/null\n\nkubectl create secret generic \"${SECRET_NAME}\" --from-file=.dockerconfigjson=${AUTH_JSON_PATH} --type=kubernetes.io/dockerconfigjson &> /dev/null\n\nres=$?\n\n[ ${res} == 0 ] && { \n    echo \"Image pull secrets updated\" \n} || { \n    echo \"\"\n    exit 1 \n}"
-    default_mode: '755'
+    default_mode: '0755'
     key: copy-secrets
     mount_path: /usr/bin/copy-secrets
     name: copy-secrets

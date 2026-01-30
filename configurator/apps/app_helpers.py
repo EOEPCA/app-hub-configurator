@@ -89,6 +89,7 @@ def get_bash_login_config_map(
         mount_path="/workspace/.bash_login",
         readonly=readonly,
         persist=persist,
+        default_mode="0660",
     )
 
 
@@ -102,6 +103,7 @@ def get_bashrc_config_map(
         mount_path="/workspace/.bashrc",
         readonly=readonly,
         persist=persist,
+        default_mode="0660",
     )
 
 

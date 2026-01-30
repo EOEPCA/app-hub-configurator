@@ -136,10 +136,17 @@ c.KubeSpawner.environment = {
     "JUPYTER_ENABLE_LAB": "true",
 }
 
-c.KubeSpawner.uid = 1001
+c.KubeSpawner.uid = 1000
 c.KubeSpawner.fs_gid = 100
 c.KubeSpawner.hub_connect_ip = jupyterhub_hub_host
-
+c.KubeSpawner.extra_pod_config = {
+    "securityContext": {
+        "runAsUser": 1000,
+        "runAsGroup": 100,
+        "fsGroup": 1000,
+        "fsGroupChangePolicy": "OnRootMismatch",
+    }
+}
 # SecurityContext
 c.KubeSpawner.privileged = True
 c.KubeSpawner.allow_privilege_escalation = True

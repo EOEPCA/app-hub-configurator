@@ -31,7 +31,7 @@ class BaseCoderProfile(BaseAppProfile):
                 name="copy-secrets",
                 key="copy-secrets",
                 mount_path="/usr/bin/copy-secrets",
-                default_mode="755",
+                default_mode="0755",
                 persist=False,
             ),
         ]
