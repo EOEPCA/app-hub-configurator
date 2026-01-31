@@ -308,15 +308,28 @@ This design supports, without refactoring:
 
 ## License
 
+
+## Usage examples
+
+```
 dump-config \
   --profiles coder_app,gpu_coder_app,remote_desktop,qgis_remote_desktop \
   --override coder_app:image=ghcr.io/terradue/coder:2024.11 \
   --groups group-a,group-b,group-c
+```
 
-
+```
 dump-config \
   --profiles coder_app,gpu_coder_app,remote_desktop,qgis_remote_desktop 
   --override coder_app:image=ghcr.io/terradue/coder:2024.11 \
   --groups group-a,group-b,group-c \
   --override gpu_coder_app:groups=ml-users,gpu-users
- 
+```
+
+```
+dump-config \
+  --profiles-dir data/work/extra-profiles \
+  --profiles coder_app,mlflow_coder_app \
+  --groups group-a,group-b \ 
+  --output config.yaml
+```

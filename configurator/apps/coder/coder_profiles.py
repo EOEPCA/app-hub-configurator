@@ -21,7 +21,8 @@ class CoderProfile(BaseCoderProfile):
     def get_manifests(self):
         return super().get_manifests() + [
             load_manifests(
-                name="local-stack",
+                slug=self.slug,
+                name=f"local-stack-{self.slug.replace('_', '-')}",
                 key="local-stack",
                 file_path=os.path.join(
                     self.manifests_path,
@@ -32,10 +33,10 @@ class CoderProfile(BaseCoderProfile):
         ]
     
     def get_env_secrets(self) -> list[str]:
-        return ["localstack-s3-secret"] + super().get_env_secrets()
+        return ["localstack-s3-secret-coder-app"] + super().get_env_secrets()
 
     def get_env_config_maps(self) -> list[str]:
-        return ["env-var-configmap"] + super().get_env_config_maps()
+        return ["env-var-configmap-coder-app"] + super().get_env_config_maps()
 
 class GpuCoderProfile(BaseCoderProfile):
     display_name = "GPU Code Server"
@@ -105,6 +106,7 @@ class DaskGatewayCoderProfile(BaseCoderProfile):
             load_manifests(
                 name="dask-gateway",
                 key="dask-gateway",
+                slug=self.slug,
                 file_path=os.path.join(
                     self.manifests_path,
                     self.slug,

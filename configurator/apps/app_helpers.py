@@ -33,10 +33,12 @@ def literalize_multiline(obj):
 
 
 def create_init_container(
-    image: str, volume_mounts: List[VolumeMount]
+    image: str, volume_mounts: List[VolumeMount], slug: str
 ) -> InitContainer:
     init_context_volume_mount = InitContainerVolumeMount(
-        mount_path="/opt/init/.init.sh", name="init", sub_path="init"
+        mount_path="/opt/init/.init.sh",
+        name=f"init-{slug.replace('_', '-')}",
+        sub_path="init"
     )
 
     return InitContainer(
@@ -53,6 +55,7 @@ def create_init_container(
 def get_config_map(
     path: str,
     name: str,
+    slug: str,
     key: str,
     mount_path: str,
     readonly: bool = True,
@@ -69,7 +72,7 @@ def get_config_map(
         return None
 
     return ConfigMap(
-        name=name,
+        name=f"{name}-{slug.replace('_', '-')}",
         key=key,
         content=content,
         readonly=readonly,
@@ -80,12 +83,13 @@ def get_config_map(
 
 
 def get_bash_login_config_map(
-    path: str, readonly: bool = True, persist: bool = True
+    path: str, slug: str, readonly: bool = True, persist: bool = True
 ) -> ConfigMap:
     return get_config_map(
         path=path,
         name="bash-login",
-        key="bash-login",
+        key=f"bash-login-{slug.replace('_', '-')}",
+        slug=slug,
         mount_path="/workspace/.bash_login",
         readonly=readonly,
         persist=persist,
@@ -94,12 +98,13 @@ def get_bash_login_config_map(
 
 
 def get_bashrc_config_map(
-    path: str, readonly: bool = True, persist: bool = True
+    path: str, slug: str, readonly: bool = True, persist: bool = True
 ) -> ConfigMap:
     return get_config_map(
         path=path,
         name="bash-rc",
-        key="bash-rc",
+        key=f"bash-rc",
+        slug=slug,
         mount_path="/workspace/.bashrc",
         readonly=readonly,
         persist=persist,
@@ -108,12 +113,13 @@ def get_bashrc_config_map(
 
 
 def get_init_script_config_map(
-    path: str, readonly: bool = True, persist: bool = True
+    path: str, slug: str, readonly: bool = True, persist: bool = True
 ) -> ConfigMap:
     return get_config_map(
         path=path,
         name="init",
-        key="init",
+        key=f"init",
+        slug=slug,
         readonly=readonly,
         persist=persist,
         mount_path="/opt/init/.init.sh",
@@ -121,7 +127,7 @@ def get_init_script_config_map(
     )
 
 
-def load_manifests(*, name: str, key: str, file_path: str) -> Manifest:
+def load_manifests(*, name: str, key: str, file_path: str, slug: str) -> Manifest:
     with open(file_path, "r") as f:
         content = list(yaml.safe_load_all(f))
 
@@ -129,7 +135,7 @@ def load_manifests(*, name: str, key: str, file_path: str) -> Manifest:
     content = [doc for doc in content if doc is not None]
 
     return Manifest(
-        name=name,
+        name=f"{name}-{slug.replace('_', '-')}",
         key=key,
         persist=False,
         content=content,

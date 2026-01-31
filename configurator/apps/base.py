@@ -110,10 +110,10 @@ class BaseAppProfile:
         cms = []
 
         if self.bash_login_path:
-            cms.append(get_bash_login_config_map(self.bash_login_path, persist=False))
+            cms.append(get_bash_login_config_map(self.bash_login_path, persist=False, slug=self.slug))
 
         if self.bashrc_path:
-            cms.append(get_bashrc_config_map(self.bashrc_path, persist=False))
+            cms.append(get_bashrc_config_map(self.bashrc_path, persist=False, slug=self.slug))
 
         return cms
 
@@ -121,13 +121,14 @@ class BaseAppProfile:
         if not self.init_script_path:
             return [], []
 
-        cm = get_init_script_config_map(self.init_script_path, persist=False)
+        cm = get_init_script_config_map(self.init_script_path, persist=False, slug=self.slug)
         if not cm:
             return [], []
 
         init = create_init_container(
             image=self.image,
             volume_mounts=[v.volume_mount for v in self.volumes],
+            slug=self.slug
         )
 
         return [cm], [init]

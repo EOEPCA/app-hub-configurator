@@ -27,8 +27,9 @@ class BaseCoderProfile(BaseAppProfile):
     def get_config_maps(self):
         config_maps = [
             get_config_map(
+                slug=self.slug,
                 path=self.copy_secrets,
-                name="copy-secrets",
+                name=f"copy-secrets",
                 key="copy-secrets",
                 mount_path="/usr/bin/copy-secrets",
                 default_mode="0755",
@@ -85,7 +86,7 @@ class BaseCoderProfile(BaseAppProfile):
 
     def get_role_bindings(self) -> list[RoleBinding]:
         pod_manager_role = Role(
-            name="pod-manager-role",
+            name=f"pod-manager-role-{self.slug.replace('_', '-')}",
             api_groups=[""],
             resources=["pods"],
             verbs=[
@@ -99,14 +100,14 @@ class BaseCoderProfile(BaseAppProfile):
         )
 
         pod_exec_role = Role(
-            name="pod-exec-role",
+            name=f"pod-exec-role-{self.slug.replace('_', '-')}",
             api_groups=[""],
             resources=["pods/exec"],
             verbs=[Verb.create],
         )
 
         log_reader_role = Role(
-            name="log-reader-role",
+            name=f"log-reader-role-{self.slug.replace('_', '-')}",
             api_groups=[""],
             resources=["pods", "pods/log"],
             verbs=[
@@ -117,14 +118,14 @@ class BaseCoderProfile(BaseAppProfile):
         )
 
         secret_patcher_role = Role(
-            name="secret-patcher-role",
+            name=f"secret-patcher-role-{self.slug.replace('_', '-')}",
             api_groups=[""],
             resources=["secrets"],
             verbs=[Verb.create, Verb.delete],
         )
 
         job_submitter_role = Role(
-            name="job-submitter-role",
+            name=f"job-submitter-role-{self.slug.replace('_', '-')}",
             api_groups=["batch"],
             resources=["jobs"],
             verbs=[Verb.create, Verb.delete, Verb.list, Verb.watch, Verb.get],
@@ -132,31 +133,31 @@ class BaseCoderProfile(BaseAppProfile):
 
         bindings = [
             RoleBinding(
-                name="log-reader-role-binding",
+                name=f"log-reader-role-binding-{self.slug.replace('_', '-')}",
                 subjects=[Subject(name="default", kind="ServiceAccount")],
                 role=log_reader_role,
                 persist=False,
             ),
             RoleBinding(
-                name="pod-reader-role-binding",
+                name=f"pod-reader-role-binding-{self.slug.replace('_', '-')}",
                 subjects=[Subject(name="default", kind="ServiceAccount")],
                 role=pod_manager_role,
                 persist=False,
             ),
             RoleBinding(
-                name="pod-exec-role-binding",
+                name=f"pod-exec-role-binding-{self.slug.replace('_', '-')}",
                 subjects=[Subject(name="default", kind="ServiceAccount")],
                 role=pod_exec_role,
                 persist=False,
             ),
             RoleBinding(
-                name="secret-patcher-role-binding",
+                name=f"secret-patcher-role-binding-{self.slug.replace('_', '-')}",
                 subjects=[Subject(name="default", kind="ServiceAccount")],
                 role=secret_patcher_role,
                 persist=False,
             ),
             RoleBinding(
-                name="job-submitter-role-binding",
+                name=f"job-submitter-role-binding-{self.slug.replace('_', '-')}",
                 subjects=[Subject(name="default", kind="ServiceAccount")],
                 role=job_submitter_role,
                 persist=False,

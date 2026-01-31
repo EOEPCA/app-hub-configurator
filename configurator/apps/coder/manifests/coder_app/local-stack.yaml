@@ -22,7 +22,7 @@ spec:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: localstack-s3-secret
+  name: localstack-s3-secret-coder-app
   namespace: "{{ namespace }}"
 type: Opaque
 data:
@@ -33,7 +33,7 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: env-var-configmap
+  name: env-var-configmap-coder-app
   namespace: "{{ namespace }}"
 data:
   ENV_VAR1: value1

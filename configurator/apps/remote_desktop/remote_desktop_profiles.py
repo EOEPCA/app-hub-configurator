@@ -56,6 +56,7 @@ class DesktopSnapProfile(BaseRemoteDesktopProfile):
 
     snap_conf = get_config_map(
         path=os.path.join(base_path, f"config_maps/{slug}/snap12.conf"),
+        slug=slug,
         name="snap-conf",
         key="snap.conf",
         mount_path="/usr/local/snap/etc/snap.conf",
@@ -65,6 +66,7 @@ class DesktopSnapProfile(BaseRemoteDesktopProfile):
 
     snap_properties = get_config_map(
         path=os.path.join(base_path, f"config_maps/{slug}/snap12.properties"),
+        slug=slug,
         name="snap-properties",
         key="snap.properties",
         mount_path="/usr/local/snap/etc/snap.properties",
