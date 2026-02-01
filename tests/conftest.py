@@ -28,3 +28,17 @@ def reset_registry():
 
     # clean again at end (optional)
     profile_registry.clear()
+
+
+@pytest.fixture(autouse=True)
+def reset_global_profile_registry():
+    """
+    Ensure global profile_registry is clean for each test.
+
+    Important because:
+    - profiles auto-register on import
+    - plugin tests may import external modules multiple times
+    """
+    profile_registry.clear()
+    yield
+    profile_registry.clear()

@@ -137,3 +137,36 @@ def test_multiple_overrides(tmp_path):
     assert kube_override["cpu_limit"] == 6
     assert kube_override["mem_limit"] == "12G"
     assert kube_override["image"] == "ghcr.io/terradue/coder:latest"
+
+
+def test_node_selector_not_nested_by_slug(tmp_path):
+    runner = CliRunner()
+    output = tmp_path / "config.yaml"
+
+    result = runner.invoke(
+        main,
+        [
+            "--profiles",
+            "gpu_coder_app",
+            "--groups",
+            "group-a",
+            "--node-selector",
+            "gpu_coder_app:nodepool=gpu",
+            "--output",
+            str(output),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+
+    config = read_yaml(output)
+    node_selector = config["profiles"][0]["node_selector"]
+
+    # override key is present
+    assert node_selector["nodepool"] == "gpu"
+
+    # default key still present (merge behavior)
+    assert node_selector["nvidia.com/gpu.present"] == "true"
+
+    # and still not nested by slug
+    assert "gpu_coder_app" not in node_selector

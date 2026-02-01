@@ -2,6 +2,8 @@ from typing import Dict, Type
 
 from configurator.apps.base import BaseAppProfile
 
+import click
+
 
 class ProfileRegistry:
     def __init__(self):
@@ -48,8 +50,8 @@ class ProfileRegistry:
         """
         try:
             return self._profiles[slug]
-        except KeyError:
-            raise KeyError(f"Unknown profile slug '{slug}'")
+        except KeyError as e:
+            raise click.UsageError(f"Unknown profile slug '{slug}'") from e
 
     def all(self) -> Dict[str, Type[BaseAppProfile]]:
         """Get all registered profiles.

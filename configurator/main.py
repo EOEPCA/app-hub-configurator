@@ -34,7 +34,8 @@ def load_external_profiles(profile_dirs: tuple[str, ...]) -> None:
             raise click.UsageError(f"--profiles-dir must be an existing folder: {d}")
 
         # Make modules importable
-        sys.path.insert(0, str(p))
+        if str(p) not in sys.path:
+            sys.path.insert(0, str(p))
 
         # Import all top-level modules/packages in that folder
         for mod in pkgutil.iter_modules([str(p)]):
@@ -149,7 +150,13 @@ def apply_overrides(profile, overrides: dict[str, str]) -> None:
             value = groups
 
         elif field in {"cpu_limit", "cpu_guarantee"}:
-            value = int(raw)
+            try:
+                value = int(raw)
+            except ValueError as e:
+                raise click.UsageError(
+                    f"Invalid value for {field} in profile '{profile.slug}': {raw!r} "
+                    "(must be an integer)"
+                ) from e
 
         else:
             value = raw
@@ -332,7 +339,7 @@ def main(
             groups=group_list,
             storage_class_rwo=storage_class_rwo,
             storage_class_rwx=storage_class_rwx,
-            node_selector=node_selector_overrides,
+            node_selector=node_selector_overrides.get(slug, {}),
         )
         if slug in override_map:
             apply_overrides(profile, override_map[slug])
