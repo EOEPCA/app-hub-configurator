@@ -5,9 +5,27 @@ from configurator.apps.base import BaseAppProfile
 
 class ProfileRegistry:
     def __init__(self):
+        """Registry for application profiles.
+
+        Args:
+            None
+        """
         self._profiles: Dict[str, Type[BaseAppProfile]] = {}
 
+    def clear(self) -> None:
+        """Clear all registered profiles.
+
+        Args:
+            None
+        """
+        self._profiles.clear()
+
     def register(self, profile_cls: Type[BaseAppProfile]) -> None:
+        """Register a profile class.
+
+        Args:
+            profile_cls: The profile class to register.
+        """
         slug = profile_cls.slug
 
         if not slug:
@@ -21,10 +39,22 @@ class ProfileRegistry:
         self._profiles[slug] = profile_cls
 
     def get(self, slug: str) -> Type[BaseAppProfile]:
+        """Get a registered profile class by slug.
+
+        Args:
+            slug: The slug of the profile to retrieve.
+        Returns:
+            The profile class associated with the given slug.
+        """
         try:
             return self._profiles[slug]
         except KeyError:
             raise KeyError(f"Unknown profile slug '{slug}'")
 
     def all(self) -> Dict[str, Type[BaseAppProfile]]:
+        """Get all registered profiles.
+
+        Args:
+            None
+        """
         return dict(self._profiles)
