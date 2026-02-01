@@ -1,6 +1,7 @@
 from configurator.apps import profile_registry
 from configurator.apps.coder.base_coder import BaseCoderProfile
 
+
 class MlflowCoderProfile(BaseCoderProfile):
     slug = "mlflow_coder_app"
     display_name = "Coder + MLflow"
@@ -27,5 +28,6 @@ class MlflowCoderProfile(BaseCoderProfile):
                 file_path=manifest_path,
             )
         ]
+
 
 profile_registry.register(MlflowCoderProfile)

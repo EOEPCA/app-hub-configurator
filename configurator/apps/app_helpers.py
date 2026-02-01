@@ -38,7 +38,7 @@ def create_init_container(
     init_context_volume_mount = InitContainerVolumeMount(
         mount_path="/opt/init/.init.sh",
         name=f"init-{slug.replace('_', '-')}",
-        sub_path="init"
+        sub_path="init",
     )
 
     return InitContainer(
@@ -103,7 +103,7 @@ def get_bashrc_config_map(
     return get_config_map(
         path=path,
         name="bash-rc",
-        key=f"bash-rc",
+        key="bash-rc",
         slug=slug,
         mount_path="/workspace/.bashrc",
         readonly=readonly,
@@ -118,7 +118,7 @@ def get_init_script_config_map(
     return get_config_map(
         path=path,
         name="init",
-        key=f"init",
+        key="init",
         slug=slug,
         readonly=readonly,
         persist=persist,

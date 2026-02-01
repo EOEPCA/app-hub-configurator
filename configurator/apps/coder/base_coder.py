@@ -1,5 +1,13 @@
 import os
-from configurator.models import Volume, VolumeMount, RoleBinding, Role, Subject, Verb, ImagePullSecret
+from configurator.models import (
+    Volume,
+    VolumeMount,
+    RoleBinding,
+    Role,
+    Subject,
+    Verb,
+    ImagePullSecret,
+)
 from configurator.apps.base import BaseAppProfile
 from configurator.apps.app_helpers import get_config_map
 
@@ -12,8 +20,8 @@ class BaseCoderProfile(BaseAppProfile):
     base_path = os.path.dirname(__file__)
     manifests_path = os.path.join(base_path, "manifests")
 
-    bash_login_path = os.path.join(base_path, f"config_maps/common/bash-login")
-    copy_secrets = os.path.join(base_path, f"config_maps/common/copy-secrets")
+    bash_login_path = os.path.join(base_path, "config_maps/common/bash-login")
+    copy_secrets = os.path.join(base_path, "config_maps/common/copy-secrets")
 
     def get_image_pull_secrets(self) -> list[str]:
         incluster_image_pull_secret = ImagePullSecret(
@@ -29,7 +37,7 @@ class BaseCoderProfile(BaseAppProfile):
             get_config_map(
                 slug=self.slug,
                 path=self.copy_secrets,
-                name=f"copy-secrets",
+                name="copy-secrets",
                 key="copy-secrets",
                 mount_path="/usr/bin/copy-secrets",
                 default_mode="0755",

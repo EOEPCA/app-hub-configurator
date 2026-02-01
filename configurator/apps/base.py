@@ -8,7 +8,7 @@ from configurator.models import (
     Manifest,
     RoleBinding,
     ConfigMap,
-    SecretMount
+    SecretMount,
 )
 from configurator.apps.app_helpers import (
     get_bash_login_config_map,
@@ -94,10 +94,10 @@ class BaseAppProfile:
 
     def get_image_pull_secrets(self) -> list[str]:
         return []
-    
+
     def get_env_config_maps(self) -> list[str]:
         return []
-    
+
     def get_env_secrets(self) -> list[str]:
         return []
 
@@ -110,10 +110,16 @@ class BaseAppProfile:
         cms = []
 
         if self.bash_login_path:
-            cms.append(get_bash_login_config_map(self.bash_login_path, persist=False, slug=self.slug))
+            cms.append(
+                get_bash_login_config_map(
+                    self.bash_login_path, persist=False, slug=self.slug
+                )
+            )
 
         if self.bashrc_path:
-            cms.append(get_bashrc_config_map(self.bashrc_path, persist=False, slug=self.slug))
+            cms.append(
+                get_bashrc_config_map(self.bashrc_path, persist=False, slug=self.slug)
+            )
 
         return cms
 
@@ -121,14 +127,16 @@ class BaseAppProfile:
         if not self.init_script_path:
             return [], []
 
-        cm = get_init_script_config_map(self.init_script_path, persist=False, slug=self.slug)
+        cm = get_init_script_config_map(
+            self.init_script_path, persist=False, slug=self.slug
+        )
         if not cm:
             return [], []
 
         init = create_init_container(
             image=self.image,
             volume_mounts=[v.volume_mount for v in self.volumes],
-            slug=self.slug
+            slug=self.slug,
         )
 
         return [cm], [init]

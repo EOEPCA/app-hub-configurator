@@ -30,6 +30,7 @@ class DesktopQgisProfile(BaseRemoteDesktopProfile):
         config_maps = []
         return super().get_config_maps() + config_maps
 
+
 class DesktopPanoplyProfile(BaseRemoteDesktopProfile):
     display_name = "Panoply Remote Desktop"
     description = "Linux desktop environment with Panoply via web browser"
@@ -41,6 +42,7 @@ class DesktopPanoplyProfile(BaseRemoteDesktopProfile):
     bash_login_path = os.path.join(base_path, f"config_maps/{slug}/bash-login")
     bashrc_path = os.path.join(base_path, f"config_maps/{slug}/bash-rc")
     init_script_path = os.path.join(base_path, f"config_maps/{slug}/init.sh")
+
 
 class DesktopSnapProfile(BaseRemoteDesktopProfile):
     display_name = "Snap Remote Desktop"
@@ -86,5 +88,3 @@ class DesktopSnapProfile(BaseRemoteDesktopProfile):
         }
 
         return env
-
-

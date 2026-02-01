@@ -17,6 +17,7 @@ def load_builtin_profiles():
     import configurator.apps.coder  # noqa: F401
     import configurator.apps.remote_desktop  # noqa: F401
 
+
 def load_external_profiles(profile_dirs: tuple[str, ...]) -> None:
     """
     Load external profile python modules/packages from given directories.
@@ -38,6 +39,7 @@ def load_external_profiles(profile_dirs: tuple[str, ...]) -> None:
         # Import all top-level modules/packages in that folder
         for mod in pkgutil.iter_modules([str(p)]):
             importlib.import_module(mod.name)
+
 
 def literalize_multiline_values(obj):
     """
@@ -277,7 +279,7 @@ def main(
     override: list[str],
     list_profiles: bool,
     describe_profile: str,
-    profiles_dir: list[str],    
+    profiles_dir: list[str],
 ) -> None:
     """
     Generate an application-hub configuration YAML.

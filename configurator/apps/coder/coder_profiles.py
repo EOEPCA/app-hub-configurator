@@ -31,12 +31,13 @@ class CoderProfile(BaseCoderProfile):
                 ),
             )
         ]
-    
+
     def get_env_secrets(self) -> list[str]:
         return ["localstack-s3-secret-coder-app"] + super().get_env_secrets()
 
     def get_env_config_maps(self) -> list[str]:
         return ["env-var-configmap-coder-app"] + super().get_env_config_maps()
+
 
 class GpuCoderProfile(BaseCoderProfile):
     display_name = "GPU Code Server"

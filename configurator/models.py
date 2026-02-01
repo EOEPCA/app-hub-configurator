@@ -124,11 +124,13 @@ class ImagePullSecret(BaseModel):
     persist: bool = True
     data: Optional[str] = None
 
+
 class SecretMount(BaseModel):
     name: str
     mount_path: str
     sub_path: Optional[str] = None
-    
+
+
 class Profile(BaseModel):
     """profile object"""
 
@@ -147,6 +149,7 @@ class Profile(BaseModel):
     env_from_config_maps: Optional[List[str]] = None
     env_from_secrets: Optional[List[str]] = None
     secret_mounts: Optional[List[SecretMount]] = None
+
 
 class Config(BaseModel):
     """config object"""
