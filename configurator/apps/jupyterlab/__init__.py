@@ -4,9 +4,9 @@
 
 from configurator.apps import profile_registry
 from .jupyterlab_profiles import JupyterLabSmallProfile
+
 __all__ = [
     "JupyterLabSmallProfile",
 ]
 
 profile_registry.register(JupyterLabSmallProfile)
-

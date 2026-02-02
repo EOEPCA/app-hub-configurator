@@ -1,8 +1,8 @@
 import os
 from configurator.apps.jupyterlab.base_jupyterlab import BaseJupyterLabProfile
 
-class JupyterLabSmallProfile(BaseJupyterLabProfile):
 
+class JupyterLabSmallProfile(BaseJupyterLabProfile):
     slug = "jupyterlab_small"
 
     base_path = os.path.dirname(__file__)

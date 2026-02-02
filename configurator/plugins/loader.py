@@ -11,6 +11,7 @@ def load_builtin_profiles():
     import configurator.apps.remote_desktop  # noqa: F401
     import configurator.apps.jupyterlab  # noqa: F401
 
+
 def load_external_profiles(profile_dirs: tuple[str, ...]) -> None:
     """
     Load external profile python modules/packages from given directories.

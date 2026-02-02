@@ -2,14 +2,8 @@ import os
 from configurator.models import (
     Volume,
     VolumeMount,
-    RoleBinding,
-    Role,
-    Subject,
-    Verb,
-    ImagePullSecret,
 )
 from configurator.apps.base import BaseAppProfile
-from configurator.apps.app_helpers import get_config_map
 
 
 class BaseJupyterLabProfile(BaseAppProfile):
@@ -56,5 +50,3 @@ class BaseJupyterLabProfile(BaseAppProfile):
     cpu_limit = 2
     mem_guarantee = "4G"
     mem_limit = "6G"
-
-    
