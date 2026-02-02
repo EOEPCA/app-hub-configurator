@@ -101,3 +101,17 @@ dependencies = [
 [tool.hatch.envs.dev.scripts]
 lint = "ruff format configurator tests data"
 check = "ruff check --fix configurator tests data"
+
+
+[tool.hatch.envs.docs]
+description = "MkDocs documentation environment"
+dependencies = [
+  "mkdocs-material",
+  "mkdocs-macros-plugin",
+  "mkdocs-git-revision-date-localized-plugin",
+  "mkdocs-minify-plugin",
+]
+
+[tool.hatch.envs.docs.scripts]
+serve = "mkdocs serve"
+build = "mkdocs build --strict"

@@ -16,3 +16,8 @@ tasks:
     desc: Run linters
     cmds:
       - hatch run dev:lint
+
+  serve-doc:
+    desc: Serve documentation locally
+    cmds:
+      - hatch run docs:serve

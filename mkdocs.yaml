@@ -1,0 +1,61 @@
+site_name: Configurator
+site_description: Application Hub config generator
+repo_url: https://git.terradue.com/dev-platforms/application-hub
+repo_name: Terradue / application-hub
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.expand
+    - navigation.indexes
+    - toc.follow
+    - content.code.copy
+    - content.code.annotate
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+markdown_extensions:
+  - admonition
+  - footnotes
+  - toc:
+      permalink: true
+  - pymdownx.superfences
+  - pymdownx.details
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.highlight:
+      anchor_linenums: true
+      linenums: true
+
+nav:
+  - Home: index.md
+  - Getting started: getting-started.md
+  - CLI:
+      - cli/overview.md
+      - cli/generating-config.md
+      - cli/overrides.md
+      - cli/inspecting.md
+      - cli/plugins.md
+      - cli/troubleshooting.md
+  - Profiles:
+      - profiles/overview.md
+      - profiles/coder.md
+      - profiles/remote-desktop.md
+  - Developer guide:
+      - dev/architecture.md
+      - dev/adding-profiles.md
+      - dev/manifests.md
+      - dev/testing.md
+      - dev/release.md
+  - Reference:
+      - reference/config-schema.md
+      - reference/faq.md
