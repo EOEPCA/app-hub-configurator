@@ -26,6 +26,7 @@ class MlflowCoderProfile(BaseCoderProfile):
                 name="mlflow",
                 key="mlflow",
                 file_path=manifest_path,
+                slug=self.slug,
             )
         ]
 
