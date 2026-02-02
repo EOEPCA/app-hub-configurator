@@ -25,8 +25,8 @@ RUN microdnf -y update && \
 
 # Non-root user
 ENV HOME=/home/neo
-RUN groupadd -g 2000 neo && \
-    useradd -u 2000 -g 2000 -m -d ${HOME} -s /sbin/nologin neo && \
+RUN /usr/sbin/groupadd -g 2000 neo && \
+    /usr/sbin/useradd -u 2000 -g 2000 -m -d ${HOME} -s /sbin/nologin neo && \
     mkdir -p /app && \
     chown -R 2000:2000 /app ${HOME}
 
@@ -37,10 +37,10 @@ WORKDIR /app
 ENV VIRTUAL_ENV=/app/venv
 ENV PATH="${VIRTUAL_ENV}/bin:${PATH}"
 RUN python3 -m venv /app/venv && \
-    pip install --no-cache-dir --upgrade pip
+    /app/venv/bin/pip install --no-cache-dir --upgrade pip
 
 COPY --from=builder /src/dist/*.whl /app/dist/
 
-RUN pip install --no-cache-dir /app/dist/*.whl cwltool && \
+RUN /app/venv/bin/pip install --no-cache-dir /app/dist/*.whl cwltool && \
     dump-config --help
 
