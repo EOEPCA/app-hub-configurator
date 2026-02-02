@@ -214,7 +214,7 @@ container-push-latest-dev:
     - container-build
     - container-scan
   rules:
-    - if: '$CI_COMMIT_BRANCH == develop'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
       when: on_success
     - when: never
   before_script:
