@@ -46,6 +46,8 @@ nav:
       - cli/inspecting.md
       - cli/plugins.md
       - cli/troubleshooting.md
+  - Container: 
+      - container/container.md
   - Profiles:
       - profiles/overview.md
       - profiles/coder.md
