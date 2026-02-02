@@ -1,0 +1,6 @@
+alias ll="ls -l"
+
+. /home/jovyan/.bashrc
+
+# Cache Git HTTPS credentials in memory (8 hours)
+git config --global credential.helper 'cache --timeout=28800'

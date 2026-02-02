@@ -9,7 +9,7 @@ def load_builtin_profiles():
     # Trigger profile registration, set noqa to avoid unused import warning
     import configurator.apps.coder  # noqa: F401
     import configurator.apps.remote_desktop  # noqa: F401
-
+    import configurator.apps.jupyterlab  # noqa: F401
 
 def load_external_profiles(profile_dirs: tuple[str, ...]) -> None:
     """
