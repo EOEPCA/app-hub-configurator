@@ -7,18 +7,27 @@ This is useful when:
 - you want reproducible config generation
 - you want to mount external profiles/plugins into the container
 
+## Build the image
+
+From the project root:
+
+```bash
+docker build -t application-hub-configurator .
+```
+
 ## Example
 
 From the project root:
 
 ```bash
 docker run --rm -it \
-  -v $PWD/app \
+  -v $PWD/output:/work \
   -v $PWD/data:/data \
-  docker.io/library/dp \
+  application-hub-configurator \
   dump-config \
-  --profiles-dir /data/work/extra-profiles/ \
-  --profiles mlflow_coder_app \
+  --profiles-dir /data \
+  --profiles coder_app \
+  --output /work/config.yaml \
   --groups group-2
 ```
 
@@ -50,13 +59,12 @@ Example layout:
 docker run --rm -it \
   -v $PWD/output:/work \
   -v $PWD/extra-profiles:/extra-profiles \
-  docker.io/library/dp \
+  application-hub-configurator \
   dump-config \
   --profiles-dir /extra-profiles \
-  --profiles mlflow_coder_app \
+  --profiles my_custom_coder \
   --groups group-2 \
   --output /work/config.yaml
 ```
 
 This produces `./output/config.yaml` on your host
-

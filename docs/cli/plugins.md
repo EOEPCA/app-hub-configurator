@@ -17,10 +17,10 @@ Example plugin folder:
 ```
 my-profiles/
 ├── my_coder_profiles.py
-└── init.py
+└── __init__.py
 ```
 
-`my_coder_profiles.py` must import and register profiles into `profile_registry`.
+The folder can contain one or more Python modules. Those modules must import and register profiles into `profile_registry`.
 
 ## Example plugin module
 

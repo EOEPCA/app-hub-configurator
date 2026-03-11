@@ -59,7 +59,7 @@ All CLI options support envvars:
 
 Example:
 
-``bash
+```bash
 export ENABLED_PROFILES="coder_app,gpu_coder_app"
 export GROUPS="group-a,group-b"
 dump-config

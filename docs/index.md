@@ -56,8 +56,8 @@ dump-config \
 
 ## Documentation
 
-Start here: Getting started
+Start here: [Getting started](getting-started.md)
 
-For users/operators: CLI docs
+For users/operators: [CLI docs](cli/overview.md)
 
-For developers: Developer guide
+For developers: [Developer guide](dev/architecture.md)

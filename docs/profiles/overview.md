@@ -21,8 +21,9 @@ Each profile provides:
 
 - Coder (code-server)
 - Remote desktop (noVNC-based)
+- JupyterLab
 
 See:
 
-- Coder profiles
-- Remote desktop profiles
+- [Coder profiles](coder.md)
+- [Remote desktop profiles](remote-desktop.md)

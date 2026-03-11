@@ -49,7 +49,7 @@ Profiles are grouped by base app classes:
 
 * `BaseCoderProfile` → code / notebook / CWL apps
 * `BaseRemoteDesktopProfile` → web-based desktop apps
-* (future) `BaseJupyterLabProfile`, `BaseDashboardProfile`, …
+* `BaseJupyterLabProfile` → JupyterLab apps
 
 Each family defines sane defaults for:
 
@@ -72,6 +72,18 @@ This makes profile selection deterministic and debuggable.
 
 ```
 configurator/
+  cli/
+    commands.py                # Click command definitions
+    options.py                 # Shared CLI options
+  describe/
+    profile.py                 # Human-readable profile output
+  io/
+    yaml_writer.py             # YAML serialization
+  overrides/
+    apply.py                   # Override application
+    parser.py                  # Override parsing
+  plugins/
+    loader.py                  # Builtin/external profile loading
   apps/
     base.py                    # BaseAppProfile
     registry.py                # ProfileRegistry
@@ -85,6 +97,10 @@ configurator/
       base_remote_desktop.py   # BaseRemoteDesktopProfile
       remote_desktop_profiles.py
       __init__.py              # re-exports + registration
+
+    jupyterlab/
+      base_jupyterlab.py       # BaseJupyterLabProfile
+      jupyterlab_profiles.py   # JupyterLab profiles
 
   models.py                    # Pydantic models
   main.py                      # click-based CLI entrypoint
@@ -164,7 +180,6 @@ dump-config --help
 Option	Description
 --profiles	Comma-separated list of profile slugs
 --groups	Comma-separated list of groups
---image	Default image (overrides base default)
 --node-selector	Per-profile node selector override
 --override	Per-profile attribute override
 --output	Output YAML file
@@ -320,7 +335,7 @@ dump-config \
 
 ```
 dump-config \
-  --profiles coder_app,gpu_coder_app,remote_desktop,qgis_remote_desktop 
+  --profiles coder_app,gpu_coder_app,remote_desktop,qgis_remote_desktop \
   --override coder_app:image=ghcr.io/terradue/coder:2024.11 \
   --groups group-a,group-b,group-c \
   --override gpu_coder_app:groups=ml-users,gpu-users
@@ -328,8 +343,8 @@ dump-config \
 
 ```
 dump-config \
-  --profiles-dir data/work/extra-profiles \
-  --profiles coder_app,mlflow_coder_app \
-  --groups group-a,group-b \ 
+  --profiles-dir ./extra-profiles \
+  --profiles coder_app,my_custom_coder \
+  --groups group-a,group-b \
   --output config.yaml
 ```
