@@ -50,10 +50,10 @@ jobs:
         run: pip install hatch
 
       - name: Ruff check
-        run: hatch run ruff check configurator tests data
+        run: hatch run dev:check-ci
 
       - name: Ruff format check
-        run: hatch run ruff format --check configurator tests data
+        run: hatch run dev:lint-ci
 
       - name: Run tests
         run: hatch run test:test-q
