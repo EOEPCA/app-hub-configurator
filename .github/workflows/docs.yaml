@@ -56,4 +56,4 @@ jobs:
         run: hatch run docs:build
 
       - name: Deploy docs to GitHub Pages
-        run: hatch run mkdocs gh-deploy --force
+        run: hatch run docs:deploy
