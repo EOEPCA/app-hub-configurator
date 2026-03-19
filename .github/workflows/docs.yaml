@@ -16,12 +16,23 @@ name: docs
 on:
   push:
     branches:
+      - develop
       - main
     paths:
       - 'README.md'
       - 'docs/**'
       - 'mkdocs.yaml'
       - '.github/workflows/docs.yaml'
+  pull_request:
+    branches:
+      - develop
+      - main
+    paths:
+      - 'README.md'
+      - 'docs/**'
+      - 'mkdocs.yaml'
+      - '.github/workflows/docs.yaml'
+  workflow_dispatch:
 
 jobs:
   deploy:
