@@ -2,6 +2,9 @@
 
 This guide explains how to install and run the `dump-config` CLI.
 
+For role-specific paths, see [Onboarding](onboarding/overview.md).
+For an EOEPCA multi-application example, see [EOEPCA extra config tutorial](tutorials/eoepca-extra-config.md).
+
 ## Install
 
 From the project root:

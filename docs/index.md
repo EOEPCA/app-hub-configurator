@@ -58,6 +58,8 @@ dump-config \
 
 Start here: [Getting started](getting-started.md)
 
+Role-based onboarding: [Onboarding](onboarding/overview.md)
+
 For users/operators: [CLI docs](cli/overview.md)
 
 For developers: [Developer guide](dev/architecture.md)

@@ -46,6 +46,8 @@ Examples in this repository:
 - `training_how_to_app`
 - `mlflow_coder_app`
 
+If you are deploying via Kubernetes/Helm in this repository, also see the Skaffold-based flow in `skaffold.yaml` and the operator onboarding guide.
+
 ## Volume mounts
 
 You typically want:

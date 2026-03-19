@@ -18,6 +18,7 @@ class CoderProfile(BaseCoderProfile):
     bashrc_path = os.path.join(base_path, f"config_maps/{slug}/bash-rc")
     init_script_path = os.path.join(base_path, f"config_maps/{slug}/init.sh")
 
+
 class GpuCoderProfile(BaseCoderProfile):
     display_name = "GPU Code Server"
     description = "Code Server with GPU acceleration"

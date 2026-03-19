@@ -1,1 +1,1 @@
-from . import extra_profiles
+from . import extra_profiles as extra_profiles

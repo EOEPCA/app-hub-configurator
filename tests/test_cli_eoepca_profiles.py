@@ -32,5 +32,7 @@ def test_eoepca_coder_profile_includes_copy_secrets(tmp_path):
 
     assert profile["definition"]["slug"] == "eoepca_coder_app"
     assert profile["image_pull_secrets"][0]["name"] == "incluster-cr-secret"
-    assert any(cm["name"] == "copy-secrets-eoepca-coder-app" for cm in profile["config_maps"])
+    assert any(
+        cm["name"] == "copy-secrets-eoepca-coder-app" for cm in profile["config_maps"]
+    )
     assert profile["pod_env_vars"]["NAMESPACE"] == "{{ namespace }}"

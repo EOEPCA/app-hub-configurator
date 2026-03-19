@@ -39,6 +39,13 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Getting started: getting-started.md
+  - Tutorials:
+      - tutorials/eoepca-extra-config.md
+  - Onboarding:
+      - onboarding/overview.md
+      - onboarding/developer.md
+      - onboarding/maintainer.md
+      - onboarding/operator.md
   - CLI:
       - cli/overview.md
       - cli/generating-config.md
