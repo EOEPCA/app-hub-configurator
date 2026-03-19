@@ -91,13 +91,15 @@ Concrete profiles should define identity and defaults through class attributes s
 ## Built-in profile families
 
 - `configurator.apps.coder`
-  Registers `coder_app`, `gpu_coder_app`, `coder_dask_gateway_app`, and `training_how_to_app`.
+  Registers `coder_app`, `gpu_coder_app`, and `coder_dask_gateway_app`.
 - `configurator.apps.remote_desktop`
   Registers `remote_desktop`, `qgis_remote_desktop`, `panoply_remote_desktop`, and `snap_remote_desktop`.
 - `configurator.apps.jupyterlab`
   Registers `jupyterlab_small`.
 
 Each family packages its own defaults, supporting config maps, and manifests alongside the Python classes.
+
+Deployment-specific profiles such as training or product add-ons should live in external plugin folders loaded with `--profiles-dir`.
 
 ## Overrides
 

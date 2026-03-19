@@ -4,5 +4,3 @@ alias ll="ls -l"
 
 # Cache Git HTTPS credentials in memory (8 hours)
 git config --global credential.helper 'cache --timeout=28800'
-
-alias aws="aws --endpoint-url=http://localstack-jupyter-alice:4566"

@@ -41,6 +41,6 @@ RUN python3 -m venv /app/venv && \
 
 COPY --from=builder /src/dist/*.whl /app/dist/
 
-RUN /app/venv/bin/pip install --no-cache-dir /app/dist/*.whl cwltool && \
+RUN /app/venv/bin/pip install --no-cache-dir /app/dist/*.whl && \
     dump-config --help
 

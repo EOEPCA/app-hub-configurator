@@ -96,6 +96,9 @@ def main(
     """
     Generate an application-hub configuration YAML.
     """
+    # Build a fresh registry snapshot for each CLI invocation.
+    profile_registry.clear()
+
     # Load built-in profiles FIRST
     load_builtin_profiles()
 

@@ -112,7 +112,7 @@ configurator/
 
 ```python
 class BaseCoderProfile(BaseAppProfile):
-    image = "ghcr.io/terradue/coder:latest"
+    image = "ghcr.io/eoepca/pde-code-server:latest-dev"
     cpu_guarantee = 1
     cpu_limit = 2
     mem_guarantee = "4G"
@@ -147,7 +147,7 @@ class GpuCoderProfile(BaseCoderProfile):
 
 ```python
 class BaseRemoteDesktopProfile(BaseAppProfile):
-    image = "ghcr.io/terradue/remote-desktop:latest"
+    image = "ghcr.io/eoepca/iga-remote-desktop:1.2.0"
     default_url = "/desktop"
 ```
 
@@ -157,10 +157,11 @@ Profiles are registered explicitly in their package __init__.py:
 
 ```python
 from configurator.apps import profile_registry
-from .coder_profiles import CoderProfile, GpuCoderProfile
+from .coder_profiles import CoderProfile, GpuCoderProfile, DaskGatewayCoderProfile
 
 profile_registry.register(CoderProfile)
 profile_registry.register(GpuCoderProfile)
+profile_registry.register(DaskGatewayCoderProfile)
 ```
 
 Only **concrete profiles** are registered.
@@ -260,7 +261,7 @@ dump-config \
 ```
 dump-config \
   --profiles coder_app \
-  --override coder_app:image=ghcr.io/terradue/coder:2024.11
+  --override coder_app:image=ghcr.io/eoepca/pde-code-server:2024.11
 ```
 
 Combined Example
@@ -291,7 +292,7 @@ profiles:
       kubespawner_override:
         cpu_limit: 4
         mem_limit: 6G
-        image: ghcr.io/terradue/coder:latest
+        image: ghcr.io/eoepca/pde-code-server:latest-dev
 ```
 
 Serialization uses:
@@ -328,23 +329,23 @@ This design supports, without refactoring:
 
 ```
 dump-config \
-  --profiles coder_app,gpu_coder_app,remote_desktop,qgis_remote_desktop \
-  --override coder_app:image=ghcr.io/terradue/coder:2024.11 \
+  --profiles coder_app,gpu_coder_app,remote_desktop,qgis_remote_desktop,jupyterlab_small \
+  --override coder_app:image=ghcr.io/eoepca/pde-code-server:2024.11 \
   --groups group-a,group-b,group-c
 ```
 
 ```
 dump-config \
-  --profiles coder_app,gpu_coder_app,remote_desktop,qgis_remote_desktop \
-  --override coder_app:image=ghcr.io/terradue/coder:2024.11 \
+  --profiles coder_app,gpu_coder_app,remote_desktop,qgis_remote_desktop,jupyterlab_small \
+  --override coder_app:image=ghcr.io/eoepca/pde-code-server:2024.11 \
   --groups group-a,group-b,group-c \
   --override gpu_coder_app:groups=ml-users,gpu-users
 ```
 
 ```
 dump-config \
-  --profiles-dir ./extra-profiles \
-  --profiles coder_app,my_custom_coder \
+  --profiles-dir ./data/work/extra-profiles \
+  --profiles coder_app,training_how_to_app,mlflow_coder_app \
   --groups group-a,group-b \
   --output config.yaml
 ```

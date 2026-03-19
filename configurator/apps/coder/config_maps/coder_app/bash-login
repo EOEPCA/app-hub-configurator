@@ -1,5 +1,0 @@
-source /workspace/.bashrc
-
-export NAMESPACE="{{ namespace }}"
-
-code_app

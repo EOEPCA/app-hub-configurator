@@ -37,7 +37,7 @@ Example:
 dump-config \
   --profiles coder_app \
   --groups group-a \
-  --override coder_app:image=ghcr.io/terradue/coder:latest
+  --override coder_app:image=ghcr.io/eoepca/pde-code-server:latest-dev
 ```
 
 ## Type handling
@@ -72,5 +72,3 @@ dump-config \
 ```
 
 Note: this merges with profile defaults (it does not replace them).
-
-

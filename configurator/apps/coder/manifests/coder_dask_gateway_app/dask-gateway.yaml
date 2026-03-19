@@ -14,8 +14,8 @@ spec:
       gateway:
         backend:
           image:
-            name: ghcr.io/fabricebrito/dev-platform-dask-gateway/worker
-            tag: 1.0.0
+            name: ghcr.io/example/dask-gateway-worker
+            tag: latest
         extraConfig:
           dask_gateway_config.py: |
             c = get_config()
@@ -30,7 +30,7 @@ spec:
         service:
           type: "ClusterIP"
   providerConfigRef:
-    name: helm-provider
+    name: example-helm-provider
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -39,11 +39,11 @@ metadata:
 data:
   gateway: |
     gateway:
-      address: http://traefik-dask-gw-jupyter-{{ spawner.user.name }}-dask-gateway.{{ namespace }}.svc.cluster.local:80
+      address: http://dask-gateway.{{ namespace }}.svc.cluster.local:80
 
       cluster:
         options: 
-          image: "ghcr.io/fabricebrito/dev-platform-dask-gateway/worker:1.0.0"
+          image: "ghcr.io/example/dask-gateway-worker:latest"
           worker_cores: 0.5
           worker_cores_limit: 1
           worker_memory: "4 G"
@@ -55,11 +55,11 @@ metadata:
 data:
   gateway: |
     gateway:
-      address: http://traefik-dask-gw-jupyter-{{ spawner.user.name }}-dask-gateway.{{ namespace }}-{{ spawner.user.name }}.svc.cluster.local:80
+      address: http://dask-gateway.{{ namespace }}.svc.cluster.local:80
 
       cluster:
         options: 
-          image: "ghcr.io/fabricebrito/dev-platform-dask-gateway/worker:1.0.0"
+          image: "ghcr.io/example/dask-gateway-worker:latest"
           worker_cores: 0.5
           worker_cores_limit: 1
           worker_memory: "4 G"

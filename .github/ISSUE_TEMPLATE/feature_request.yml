@@ -1,0 +1,38 @@
+name: Feature request
+description: Suggest an improvement for app-hub-configurator
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the suggestion. Clear use-cases help us prioritize.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What problem are you trying to solve?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What should change?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What other options did you evaluate?
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Related profiles, commands, YAML snippets, or references.
+

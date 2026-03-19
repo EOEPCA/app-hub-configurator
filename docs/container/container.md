@@ -41,6 +41,11 @@ This is the recommended approach for:
 * experimental profiles
 * profiles not shipped with the core configurator repository
 
+Examples in this repository:
+
+- `training_how_to_app`
+- `mlflow_coder_app`
+
 ## Volume mounts
 
 You typically want:

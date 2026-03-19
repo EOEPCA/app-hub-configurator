@@ -1,7 +1,7 @@
 site_name: Configurator
 site_description: Application Hub config generator
-repo_url: https://git.terradue.com/dev-platforms/application-hub
-repo_name: Terradue / application-hub
+repo_url: https://github.com/eoepca/app-hub-configurator
+repo_name: eoepca / app-hub-configurator
 theme:
   name: material
   features:

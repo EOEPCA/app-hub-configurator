@@ -67,7 +67,7 @@ def test_overide_image(tmp_path):
             "--groups",
             "group-a",
             "--override",
-            "gpu_coder_app:image=ghcr.io/terradue/coder-gpu:latest",
+            "gpu_coder_app:image=ghcr.io/eoepca/pde-code-server-gpu:latest",
             "--output",
             str(output),
         ],
@@ -79,7 +79,7 @@ def test_overide_image(tmp_path):
     profile = config["profiles"][0]
     definition = profile["definition"]
     kube_override = definition["kubespawner_override"]
-    assert kube_override["image"] == "ghcr.io/terradue/coder-gpu:latest"
+    assert kube_override["image"] == "ghcr.io/eoepca/pde-code-server-gpu:latest"
 
 
 def test_overridden_groups(tmp_path):
@@ -123,7 +123,7 @@ def test_multiple_overrides(tmp_path):
             "--override",
             "coder_app:mem_limit=12G",
             "--override",
-            "coder_app:image=ghcr.io/terradue/coder:latest",
+            "coder_app:image=ghcr.io/eoepca/pde-code-server:latest-dev",
             "--output",
             str(output),
         ],
@@ -136,7 +136,7 @@ def test_multiple_overrides(tmp_path):
     kube_override = profile["definition"]["kubespawner_override"]
     assert kube_override["cpu_limit"] == 6
     assert kube_override["mem_limit"] == "12G"
-    assert kube_override["image"] == "ghcr.io/terradue/coder:latest"
+    assert kube_override["image"] == "ghcr.io/eoepca/pde-code-server:latest-dev"
 
 
 def test_node_selector_not_nested_by_slug(tmp_path):

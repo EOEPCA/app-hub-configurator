@@ -39,7 +39,6 @@ class BaseJupyterLabProfile(BaseAppProfile):
         "XDG_CONFIG_HOME": f"{home_dir}/.local",
         "XDG_DATA_HOME": f"{home_dir}/.local/share/",
         "CWLTOOL_OPTIONS": "--podman",
-        "NAMESPACE": "{{ namespace }}",
     }
 
     def get_manifests(self):

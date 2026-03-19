@@ -18,27 +18,6 @@ class CoderProfile(BaseCoderProfile):
     bashrc_path = os.path.join(base_path, f"config_maps/{slug}/bash-rc")
     init_script_path = os.path.join(base_path, f"config_maps/{slug}/init.sh")
 
-    def get_manifests(self):
-        return super().get_manifests() + [
-            load_manifests(
-                slug=self.slug,
-                name=f"local-stack-{self.slug.replace('_', '-')}",
-                key="local-stack",
-                file_path=os.path.join(
-                    self.manifests_path,
-                    self.slug,
-                    "local-stack.yaml",
-                ),
-            )
-        ]
-
-    def get_env_secrets(self) -> list[str]:
-        return ["localstack-s3-secret-coder-app"] + super().get_env_secrets()
-
-    def get_env_config_maps(self) -> list[str]:
-        return ["env-var-configmap-coder-app"] + super().get_env_config_maps()
-
-
 class GpuCoderProfile(BaseCoderProfile):
     display_name = "GPU Code Server"
     description = "Code Server with GPU acceleration"
@@ -96,7 +75,7 @@ class DaskGatewayCoderProfile(BaseCoderProfile):
     def get_pod_env_vars(self) -> dict:
         env = {
             **super().get_pod_env_vars(),
-            "DASK_GATEWAY_ADDRESS": "http://traefik-dask-gw-jupyter-{{ spawner.user.name }}-dask-gateway.{{ namespace }}.svc.cluster.local:80",
+            "DASK_GATEWAY_ADDRESS": "http://dask-gateway.{{ namespace }}.svc.cluster.local:80",
             "CODE_SERVER_WS": "/workspace/dask-app-package",
         }
 

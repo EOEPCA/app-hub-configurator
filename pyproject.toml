@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "configurator"
+name = "app-hub-configurator"
 dynamic = ["version"]
 description = 'configurator for the Application Hub'
 readme = "README.md"
@@ -16,11 +16,10 @@ authors = [
 classifiers = [
   "Development Status :: 4 - Beta",
   "Programming Language :: Python",
-  "Programming Language :: Python :: 3.8",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
@@ -32,9 +31,9 @@ dependencies = [
 ]
 
 [project.urls]
-Documentation = "https://github.com/Fabrice Brito/apex-config#readme"
-Issues = "https://github.com/Fabrice Brito/apex-config/issues"
-Source = "https://github.com/Fabrice Brito/apex-config"
+Documentation = "https://github.com/eoepca/app-hub-configurator"
+Issues = "https://github.com/eoepca/app-hub-configurator/issues"
+Source = "https://github.com/eoepca/app-hub-configurator"
 
 [tool.hatch.version]
 path = "configurator/__about__.py"
@@ -55,8 +54,8 @@ omit = [
 ]
 
 [tool.coverage.paths]
-configurator = ["src/configurator", "*/configurator/src/configurator"]
-tests = ["tests", "*/configurator/tests"]
+configurator = ["configurator", "*/configurator"]
+tests = ["tests", "*/tests"]
 
 [tool.coverage.report]
 exclude_lines = [
@@ -85,7 +84,7 @@ dependencies = [
 [tool.hatch.envs.test.scripts]
 test = "pytest"
 test-q = "pytest -q"
-test-cov = "pytest --cov=opensearch_gateway"
+test-cov = "pytest --cov=configurator"
 test-show-setup = "pytest --setup-show"
 
 
@@ -115,3 +114,14 @@ dependencies = [
 [tool.hatch.envs.docs.scripts]
 serve = "mkdocs serve"
 build = "mkdocs build --strict"
+
+[tool.hatch.build.targets.wheel]
+packages = ["configurator"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/configurator",
+  "/tests",
+  "/README.md",
+  "/pyproject.toml",
+]

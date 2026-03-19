@@ -5,11 +5,24 @@ import click
 from pathlib import Path
 
 
+def _import_or_reload(module_name: str) -> None:
+    """
+    Import a module and force execution of its module-level registration code.
+    """
+    if module_name in sys.modules:
+        importlib.reload(sys.modules[module_name])
+    else:
+        importlib.import_module(module_name)
+
+
 def load_builtin_profiles():
-    # Trigger profile registration, set noqa to avoid unused import warning
-    import configurator.apps.coder  # noqa: F401
-    import configurator.apps.remote_desktop  # noqa: F401
-    import configurator.apps.jupyterlab  # noqa: F401
+    # Force built-in profile modules to execute registration code every run.
+    for module_name in (
+        "configurator.apps.coder",
+        "configurator.apps.remote_desktop",
+        "configurator.apps.jupyterlab",
+    ):
+        _import_or_reload(module_name)
 
 
 def load_external_profiles(profile_dirs: tuple[str, ...]) -> None:
@@ -31,6 +44,9 @@ def load_external_profiles(profile_dirs: tuple[str, ...]) -> None:
         if str(p) not in sys.path:
             sys.path.insert(0, str(p))
 
-        # Import all top-level modules/packages in that folder
+        # Import all top-level modules/packages in that folder.
+        # Drop cache first so profile registration runs even if module was
+        # imported in a previous CLI invocation.
         for mod in pkgutil.iter_modules([str(p)]):
+            sys.modules.pop(mod.name, None)
             importlib.import_module(mod.name)

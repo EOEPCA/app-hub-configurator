@@ -6,10 +6,8 @@ from configurator.models import (
     Role,
     Subject,
     Verb,
-    ImagePullSecret,
 )
 from configurator.apps.base import BaseAppProfile
-from configurator.apps.app_helpers import get_config_map
 
 
 class BaseCoderProfile(BaseAppProfile):
@@ -21,31 +19,6 @@ class BaseCoderProfile(BaseAppProfile):
     manifests_path = os.path.join(base_path, "manifests")
 
     bash_login_path = os.path.join(base_path, "config_maps/common/bash-login")
-    copy_secrets = os.path.join(base_path, "config_maps/common/copy-secrets")
-
-    def get_image_pull_secrets(self) -> list[str]:
-        incluster_image_pull_secret = ImagePullSecret(
-            name="incluster-cr-secret",
-            persist=False,
-            data="ewoJImF1dGhzIjogewoJCSJjci50ZXJyYWR1ZS5jb20iOiB7CgkJCSJhdXRoIjogIlptSnlhWFJ2T21ZNVZFNUNaVTlIVEE9PSIKCQl9Cgl9Cn0=",
-        )
-
-        return [incluster_image_pull_secret] + super().get_image_pull_secrets()
-
-    def get_config_maps(self):
-        config_maps = [
-            get_config_map(
-                slug=self.slug,
-                path=self.copy_secrets,
-                name="copy-secrets",
-                key="copy-secrets",
-                mount_path="/usr/bin/copy-secrets",
-                default_mode="0755",
-                persist=False,
-            ),
-        ]
-
-        return super().get_config_maps() + config_maps
 
     def get_default_volumes(self) -> list[Volume]:
         return [
@@ -80,7 +53,6 @@ class BaseCoderProfile(BaseAppProfile):
         "XDG_CONFIG_HOME": f"{home_dir}/.local",
         "XDG_DATA_HOME": f"{home_dir}/.local/share/",
         "CWLTOOL_OPTIONS": "--podman",
-        "NAMESPACE": "{{ namespace }}",
     }
 
     def get_manifests(self):
@@ -125,13 +97,6 @@ class BaseCoderProfile(BaseAppProfile):
             ],
         )
 
-        secret_patcher_role = Role(
-            name=f"secret-patcher-role-{self.slug.replace('_', '-')}",
-            api_groups=[""],
-            resources=["secrets"],
-            verbs=[Verb.create, Verb.delete],
-        )
-
         job_submitter_role = Role(
             name=f"job-submitter-role-{self.slug.replace('_', '-')}",
             api_groups=["batch"],
@@ -156,12 +121,6 @@ class BaseCoderProfile(BaseAppProfile):
                 name=f"pod-exec-role-binding-{self.slug.replace('_', '-')}",
                 subjects=[Subject(name="default", kind="ServiceAccount")],
                 role=pod_exec_role,
-                persist=False,
-            ),
-            RoleBinding(
-                name=f"secret-patcher-role-binding-{self.slug.replace('_', '-')}",
-                subjects=[Subject(name="default", kind="ServiceAccount")],
-                role=secret_patcher_role,
                 persist=False,
             ),
             RoleBinding(

@@ -20,3 +20,11 @@ def test_describe_profile():
     assert "Profile: coder_app" in result.output
     assert "Resources:" in result.output
     assert "Image" in result.output
+
+
+def test_training_profile_not_listed_without_profiles_dir():
+    runner = CliRunner()
+    result = runner.invoke(main, ["--list-profiles"])
+
+    assert result.exit_code == 0
+    assert "training_how_to_app" not in result.output

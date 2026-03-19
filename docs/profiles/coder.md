@@ -16,7 +16,11 @@ They provide:
 - `coder_app`
 - `gpu_coder_app`
 - `coder_dask_gateway_app`
+
+Downstream examples loaded via `--profiles-dir`:
+
 - `training_how_to_app`
+- `mlflow_coder_app`
 
 ## Dask Gateway profile
 
