@@ -5,7 +5,7 @@ deploy:
   helm:
     releases:
       - name: jupyterhub
-        remoteChart: eoepca/application-hub
+        remoteChart: eoepca-dev/application-hub
         namespace: jupyter
         version: 4.0.2
         createNamespace: true
@@ -28,16 +28,26 @@ deploy:
         remoteChart: crossplane-stable/crossplane
         namespace: crossplane-system
         createNamespace: true
-        version: 1.19.0
+        version: 2.2.0
+        
     hooks:
       before:
         - host:
-            command: ["sh", "-c", "helm repo add crossplane-stable https://charts.crossplane.io/stable && helm repo update || helm repo update"]
+            command:
+              [
+                "sh",
+                "-c",
+                "helm repo add eoepca-dev https://eoepca.github.io/helm-charts && helm repo update || helm repo update",
+              ]
+        - host:
+            command:
+              [
+                "sh",
+                "-c",
+                "helm repo add crossplane-stable https://charts.crossplane.io/stable && helm repo update || helm repo update",
+              ]
         - host:
             command: ["sh", "-c", ".skaffold/scripts/get-crds.sh"]
-      after:
-        - host:
-            command: ["sh", "-c", ".skaffold/scripts/install-providers.sh"]
 
 manifests:
   rawYaml:

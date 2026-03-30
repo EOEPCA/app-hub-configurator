@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Base URL for CRDs
-BASE_URL="https://raw.githubusercontent.com/crossplane/crossplane/refs/tags/v1.18.2/cluster/crds"
+BASE_URL="https://raw.githubusercontent.com/crossplane/crossplane/refs/tags/v2.2.0/cluster/crds"
 
 # List of CRDs in the Crossplane repository
 CRDS=(
