@@ -109,9 +109,10 @@ chmod -R 777 /workspace/.local /workspace/.venv /workspace/User \
     /workspace/eoap /workspace/openeo /workspace/.podman
 
 ## AWS environment variables
-export AWS_ACCESS_KEY_ID=test
-export AWS_SECRET_ACCESS_KEY=test
+export SEAWEEDFS_S3_ENDPOINT=http://seaweedfs-s3:8333
+export AWS_ACCESS_KEY_ID=s3
+export AWS_SECRET_ACCESS_KEY=s3
 export AWS_DEFAULT_REGION=us-east-1
-export AWS_ENDPOINT_URL=http://localstack:4566
+export AWS_ENDPOINT_URL=${SEAWEEDFS_S3_ENDPOINT}
 
 aws s3 mb s3://results --endpoint-url=${AWS_ENDPOINT_URL} || true

@@ -34,20 +34,18 @@ deploy:
       before:
         - host:
             command:
-              [
-                "sh",
-                "-c",
-                "helm repo add eoepca-dev https://eoepca.github.io/helm-charts && helm repo update || helm repo update",
-              ]
-        - host:
-            command:
-              [
-                "sh",
-                "-c",
-                "helm repo add crossplane-stable https://charts.crossplane.io/stable && helm repo update || helm repo update",
-              ]
+              - sh 
+              - -c
+              - |
+                helm repo add --force-update eoepca-dev https://eoepca.github.io/helm-charts
+                helm repo add --force-update crossplane-stable https://charts.crossplane.io/stable
+                helm repo add --force-update seaweedfs https://seaweedfs.github.io/seaweedfs/helm
+                helm repo update
         - host:
             command: ["sh", "-c", ".skaffold/scripts/get-crds.sh"]
+      after:
+        - host:
+            command: ["sh", "-c", ".skaffold/scripts/install-providers.sh"]
 
 manifests:
   rawYaml:
@@ -100,4 +98,3 @@ profiles:
       - op: add
         path: /deploy/helm/releases/0/setValueTemplates/jupyterhub.hub.image.tag
         value: latest
-
