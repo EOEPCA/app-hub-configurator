@@ -56,40 +56,109 @@ profiles:
       sub_path: init
   manifests:
   - content:
-    - apiVersion: helm.crossplane.io/v1beta1
-      kind: Release
+    - apiVersion: v1
+      data:
+        s3.json: "{\n  \"identities\": [\n    {\n      \"name\": \"default\",\n      \"credentials\": [\n        {\n          \"accessKey\": \"s3\",\n          \"secretKey\": \"s3\"\n        }\n      ],\n      \"actions\": [\"Admin\", \"Read\", \"Write\", \"List\"]\n    }\n  ]\n}\n"
+      kind: ConfigMap
       metadata:
-        name: localstack
+        name: seaweedfs-s3-config
+        namespace: '{{ namespace }}'
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: seaweedfs-s3-pvc
+        namespace: '{{ namespace }}'
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 5Gi
+        storageClassName: standard
+    - apiVersion: kubernetes.crossplane.io/v1alpha2
+      kind: Object
+      metadata:
+        name: seaweedfs-s3-deployment
         namespace: '{{ namespace }}'
       spec:
         forProvider:
-          chart:
-            name: localstack
-            repository: https://localstack.github.io/helm-charts
-            version: 0.6.20
-          namespace: '{{ namespace }}'
-          skipCreateNamespace: true
-          values:
-            service:
-              type: ClusterIP
-            serviceAccount:
-              create: true
+          manifest:
+            apiVersion: apps/v1
+            kind: Deployment
+            metadata:
+              name: seaweedfs-s3
+              namespace: '{{ namespace }}'
+            spec:
+              replicas: 1
+              selector:
+                matchLabels:
+                  app: seaweedfs-s3
+              template:
+                metadata:
+                  labels:
+                    app: seaweedfs-s3
+                spec:
+                  containers:
+                  - args:
+                    - server
+                    - -s3
+                    - -s3.config=/etc/seaweedfs/s3.json
+                    - -dir=/data
+                    image: chrislusf/seaweedfs:latest
+                    name: seaweedfs
+                    ports:
+                    - containerPort: 8333
+                    readinessProbe:
+                      initialDelaySeconds: 2
+                      periodSeconds: 2
+                      tcpSocket:
+                        port: 8333
+                    resources:
+                      limits:
+                        cpu: 500m
+                        memory: 512Mi
+                      requests:
+                        cpu: 100m
+                        memory: 128Mi
+                    volumeMounts:
+                    - mountPath: /etc/seaweedfs
+                      name: config
+                    - mountPath: /data
+                      name: data
+                  volumes:
+                  - configMap:
+                      name: seaweedfs-s3-config
+                    name: config
+                  - name: data
+                    persistentVolumeClaim:
+                      claimName: seaweedfs-s3-pvc
         providerConfigRef:
-          name: helm-provider
-    - apiVersion: v1
-      data:
-        AWS_ACCESS_KEY_ID: dGVzdA==
-        AWS_DEFAULT_REGION: dXMtZWFzdC0x
-        AWS_SECRET_ACCESS_KEY: dGVzdA==
-      kind: Secret
+          name: kubernetes-provider
+    - apiVersion: kubernetes.crossplane.io/v1alpha2
+      kind: Object
       metadata:
-        name: localstack-s3-secret-coder-app
+        name: seaweedfs-s3-service
         namespace: '{{ namespace }}'
-      type: Opaque
+      spec:
+        forProvider:
+          manifest:
+            apiVersion: v1
+            kind: Service
+            metadata:
+              name: seaweedfs-s3
+              namespace: '{{ namespace }}'
+            spec:
+              ports:
+              - port: 8333
+                targetPort: 8333
+              selector:
+                app: seaweedfs-s3
+        providerConfigRef:
+          name: kubernetes-provider
     - apiVersion: v1
       data:
-        ENV_VAR1: value1
-        ENV_VAR2: value2
+        AWS_ENDPOINT_URL: http://seaweedfs-s3:8333
+        SEAWEEDFS_S3_ENDPOINT: http://seaweedfs-s3:8333
       kind: ConfigMap
       metadata:
         name: env-var-configmap-coder-app
@@ -103,7 +172,6 @@ profiles:
     CONDA_ENVS_PATH: /workspace/.envs
     CWLTOOL_OPTIONS: --podman
     HOME: /workspace
-    JUPYTERHUB_CRYPT_KEY: 6f8b2e9c4d1a7f3b5c9e0d2a4b6f8c1e7d9a3b5c1e7f9a2d4b6c8e0f2a4d6b80
     JUPYTER_PATH: /workspace/.jupyter
     NAMESPACE: '{{ namespace }}'
     NOTEBOOK_ARGS: --notebook-dir=/workspace
@@ -298,7 +366,6 @@ profiles:
     CONDA_ENVS_PATH: /workspace/.envs
     CWLTOOL_OPTIONS: --podman
     HOME: /workspace
-    JUPYTERHUB_CRYPT_KEY: 6f8b2e9c4d1a7f3b5c9e0d2a4b6f8c1e7d9a3b5c1e7f9a2d4b6c8e0f2a4d6b80
     NAMESPACE: '{{ namespace }}'
     XDG_CONFIG_HOME: /workspace/.podman
     XDG_DATA_HOME: /workspace/.podman/share/

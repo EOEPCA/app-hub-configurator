@@ -5,19 +5,20 @@ deploy:
   helm:
     releases:
       - name: jupyterhub
-        remoteChart: eoepca-dev/application-hub
+        remoteChart: eoepca/application-hub
         namespace: jupyter
-        version: 4.0.2
+        version: 2.1.0
         createNamespace: true
         valuesFiles: []
         setValueTemplates:
           jupyterhub.hub.image.name: ghcr.io/eoepca/application-hub
-          jupyterhub.hub.image.tag: 1.5.1
+          jupyterhub.hub.image.tag: 1.2.0
         setValues:
           jupyterhub.hub.image.pullSecrets: []
           jupyterhub.hub.db.pvc.storageClassName: standard
           jupyterhub.hub.extraEnv.STORAGE_CLASS: standard
           jupyterhub.proxy.secretToken: "032d5bfe141a7eab86d57587879b33c5d168617cacb339823d7f47fe2933f880"
+          #jupyterhub.hub.extraEnv.JUPYTERHUB_CRYPT_KEY: "b83d9de6dece1380c523c63260151a003d5fdd96953a3033134f8e41d50e28d2"
           jupyterhub.hub.extraEnv.APP_HUB_NAMESPACE: jupyter
           jupyterhub.hub.networkPolicy.enabled: false
         setFiles:
@@ -37,7 +38,7 @@ deploy:
               - sh 
               - -c
               - |
-                helm repo add --force-update eoepca-dev https://eoepca.github.io/helm-charts
+                helm repo add --force-update eoepca https://eoepca.github.io/helm-charts
                 helm repo add --force-update crossplane-stable https://charts.crossplane.io/stable
                 helm repo add --force-update seaweedfs https://seaweedfs.github.io/seaweedfs/helm
                 helm repo update
@@ -88,6 +89,7 @@ profiles:
       - op: add
         path: /deploy/helm/releases/0/setFiles/configYml
         value: config.yaml
+      
 
   - name: main
   

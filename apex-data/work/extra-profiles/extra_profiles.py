@@ -63,7 +63,6 @@ class APEXJupyterLabProfile(BaseJupyterLabProfile):
         "NOTEBOOK_ARGS": "--notebook-dir=/workspace",
         "JUPYTER_PATH": "/workspace/.jupyter",
         "NAMESPACE": "{{ namespace }}",
-        "JUPYTERHUB_CRYPT_KEY": "6f8b2e9c4d1a7f3b5c9e0d2a4b6f8c1e7d9a3b5c1e7f9a2d4b6c8e0f2a4d6b80",
         }
     def get_manifests(self):
         # you can reuse your existing load_manifests helper
@@ -71,7 +70,7 @@ class APEXJupyterLabProfile(BaseJupyterLabProfile):
         import os
         
         base_path = os.path.dirname(__file__)
-        manifest_path = os.path.join(base_path, f"manifests/{self.slug}/local-stack.yaml")
+        manifest_path = os.path.join(base_path, f"manifests/{self.slug}/seaweedfs-s3.yaml")
         if os.path.exists(manifest_path):
             logger.info(f"Manifest path {self.slug} exists: {manifest_path}")
         else:
@@ -115,7 +114,6 @@ class APEXCoderProfile(BaseCoderProfile):
         "XDG_DATA_HOME": "/workspace/.podman/share/",
         "CWLTOOL_OPTIONS": "--podman",
         "NAMESPACE": "{{ namespace }}",
-        "JUPYTERHUB_CRYPT_KEY": "6f8b2e9c4d1a7f3b5c9e0d2a4b6f8c1e7d9a3b5c1e7f9a2d4b6c8e0f2a4d6b80",
         }
     def get_manifests(self):
         # you can reuse your existing load_manifests helper
@@ -123,7 +121,7 @@ class APEXCoderProfile(BaseCoderProfile):
         import os
         
         base_path = os.path.dirname(__file__)
-        manifest_path = os.path.join(base_path, f"manifests/{self.slug}/local-stack.yaml")
+        manifest_path = os.path.join(base_path, f"manifests/{self.slug}/seaweedfs-s3.yaml")
         if os.path.exists(manifest_path):
             logger.info(f"Manifest path {self.slug} exists: {manifest_path}")
         else:

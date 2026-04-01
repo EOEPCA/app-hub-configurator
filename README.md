@@ -327,7 +327,7 @@ This design supports, without refactoring:
 
 ## Usage examples
 ```
-dump-config   --profiles apex_jupyter_lab_app,apex_coder_app,apex_remote_qgis_desktop_app --profiles-dir data/work/extra-profiles   --groups group-a,group-b   --override coder_app:cpu_limit=4   --output config.yaml
+dump-config   --profiles apex_jupyter_lab_app,apex_coder_app,apex_remote_qgis_desktop_app --profiles-dir apex-data/work/extra-profiles   --groups group-a,group-b  --output config.yaml
 ```
 
 ```
