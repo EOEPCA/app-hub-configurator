@@ -74,7 +74,7 @@ profiles:
         value: 1.5.2
       - op: add
         path: /deploy/helm/releases/0/setFiles/configYml
-        value: config.yaml
+        value: config/config.yml
 
 
   - name: develop
@@ -88,7 +88,7 @@ profiles:
         value: latest-dev
       - op: add
         path: /deploy/helm/releases/0/setFiles/configYml
-        value: config.yaml
+        value: config/config.yml
       
       
 
