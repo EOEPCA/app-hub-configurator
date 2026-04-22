@@ -60,7 +60,7 @@ class InitContainerVolumeMount(VolumeMount):
 
 
 class Volume(BaseModel):
-    """volume object"""
+    """Volume object"""
 
     name: str
     claim_name: str
@@ -69,6 +69,7 @@ class Volume(BaseModel):
     access_modes: List[str]
     volume_mount: VolumeMount
     persist: bool
+    annotations: Optional[Dict[str, str]] = None
 
 
 class Manifest(BaseModel):
