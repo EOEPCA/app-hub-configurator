@@ -1,0 +1,25 @@
+alias ll="ls -l"
+alias aws="aws --endpoint-url=http://seaweedfs-s3:8333"
+export AWS_ACCESS_KEY_ID=test
+export AWS_SECRET_ACCESS_KEY=test
+export AWS_DEFAULT_REGION=us-east-1
+export AWS_ENDPOINT_URL=http://seaweedfs-s3:8333
+export PATH=/workspace/.venv/bin:/workspace:$PATH
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+__conda_setup="$('/opt/conda/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
+if [ $? -eq 0 ]; then
+    eval "$__conda_setup"
+else
+    if [ -f "/opt/conda/etc/profile.d/conda.sh" ]; then
+        . "/opt/conda/etc/profile.d/conda.sh"
+    else
+        export PATH="/srv/conda/bin:$PATH"
+    fi
+fi
+unset __conda_setup
+
+if [ -f "/opt/conda/etc/profile.d/mamba.sh" ]; then
+    . "/opt/conda/etc/profile.d/mamba.sh"
+fi
+# <<< conda initialize <<<

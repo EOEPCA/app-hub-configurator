@@ -326,6 +326,17 @@ This design supports, without refactoring:
 
 
 ## Usage examples
+```
+hatch shell 
+pip install .
+```
+
+```
+dump-config   --profiles apex_jupyter_lab_app,apex_coder_app,apex_remote_qgis_desktop_app \
+--profiles-dir data/work2/extra-profiles  \
+--groups group-a,group-b  \
+--output config.yaml
+```
 
 ```
 dump-config \
@@ -344,8 +355,22 @@ dump-config \
 
 ```
 dump-config \
-  --profiles-dir ./data/work/extra-profiles \
+  --profiles-dir ./data/work1/extra-profiles \
   --profiles coder_app,training_how_to_app,mlflow_coder_app \
   --groups group-a,group-b \
   --output config.yaml
+```
+
+## Deployment
+If the user wants to deploy the application hub on a minikube cluster with different profiles. e.g. Code-Server, Jupyter Lab, Qgis, MLFLOW, etc. He must generated a new configuration by following [Usage examples](#usage-examples) and then run the following commands:
+
+```
+minikube start --driver=docker
+```
+
+```
+skaffold dev -p baseline
+# OR 
+skaffold dev -p develop
+
 ```
