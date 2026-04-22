@@ -116,6 +116,7 @@ dependencies = [
 [tool.hatch.envs.docs.scripts]
 serve = "mkdocs serve"
 build = "mkdocs build --strict"
+deploy = "mkdocs gh-deploy --force"
 
 [tool.hatch.build.targets.wheel]
 packages = ["configurator"]
