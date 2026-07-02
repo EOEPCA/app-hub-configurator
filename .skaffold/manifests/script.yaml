@@ -6,14 +6,14 @@ metadata:
 data:
   init.sh: |
     #!/bin/bash
-    apt-get update && apt-get install -y --no-install-recommends curl yq
+    apt-get update && apt-get install -y --no-install-recommends curl yq jq
 
     token=`curl -X POST -d '{"auth": {"username": "jovyan", "token": "12345"}}' http://application-hub-hub.jupyter.svc.cluster.local:8081/hub/api/users/jovyan/tokens | jq -r '.token'`
 
     curl --header "Authorization: Bearer $token" http://application-hub-hub.jupyter.svc.cluster.local:8081/hub/api/groups
 
     # create groups
-    for group in group-a group-b group-c
+    for group in GROUP_A GROUP_B
     do
       curl --request POST --location http://application-hub-hub.jupyter.svc.cluster.local:8081/hub/api/groups/${group} --header "Authorization: Bearer $token" --header 'Content-Type: application/json'
       # add user to group

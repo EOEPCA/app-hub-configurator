@@ -5,57 +5,64 @@ deploy:
   helm:
     releases:
       - name: jupyterhub
-        remoteChart: eoepca/application-hub
+        remoteChart: eoepca-dev/application-hub
         namespace: jupyter
         version: 4.0.2
         createNamespace: true
         valuesFiles: []
         setValueTemplates:
           jupyterhub.hub.image.name: ghcr.io/eoepca/application-hub
-          jupyterhub.hub.image.tag: 1.5.1
+          jupyterhub.hub.image.tag: 1.5.2
         setValues:
           jupyterhub.hub.image.pullSecrets: []
-          jupyterhub.hub.db.pvc.storageClassName: standard
-          jupyterhub.hub.extraEnv.STORAGE_CLASS: standard
+          jupyterhub.hub.db.pvc.storageClassName: csi-disk
+          jupyterhub.hub.extraEnv.STORAGE_CLASS: csi-disk
           jupyterhub.proxy.secretToken: "032d5bfe141a7eab86d57587879b33c5d168617cacb339823d7f47fe2933f880"
+          #jupyterhub.hub.extraEnv.JUPYTERHUB_CRYPT_KEY: "b83d9de6dece1380c523c63260151a003d5fdd96953a3033134f8e41d50e28d2"
           jupyterhub.hub.extraEnv.APP_HUB_NAMESPACE: jupyter
           jupyterhub.hub.networkPolicy.enabled: false
         setFiles:
           configYml: config/config.yml
           jupyterConfig: config/jupyterhub_config.py
-      
+
       - name: crossplane
         remoteChart: crossplane-stable/crossplane
         namespace: crossplane-system
         createNamespace: true
-        version: 1.19.0
+        version: 2.2.0
+
     hooks:
       before:
         - host:
-            command: ["sh", "-c", "helm repo add crossplane-stable https://charts.crossplane.io/stable && helm repo update || helm repo update"]
+            command:
+              - sh
+              - -c
+              - |
+                helm repo add --force-update eoepca-dev https://eoepca.github.io/helm-charts-dev
+                helm repo add --force-update crossplane-stable https://charts.crossplane.io/stable
+                helm repo add --force-update seaweedfs https://seaweedfs.github.io/seaweedfs/helm
+                helm repo update
         - host:
-            command: ["sh", "-c", ".skaffold/scripts/get-crds.sh"]
+            command: ["sh", "-c", "sh .skaffold/scripts/get-crds.sh"]
       after:
         - host:
-            command: ["sh", "-c", ".skaffold/scripts/install-providers.sh"]
+            command: ["sh", "-c", "sh .skaffold/scripts/install-providers.sh"]
 
 manifests:
   rawYaml:
-  - .skaffold/manifests/cluster-role-binding.yaml
-  - .skaffold/manifests/script.yaml
-  - .skaffold/manifests/job.yaml
+    - .skaffold/manifests/cluster-role-binding.yaml
+    - .skaffold/manifests/script.yaml
+    - .skaffold/manifests/job.yaml
 
 portForward:
-- resourceType: service
-  resourceName: application-hub-proxy-public
-  namespace: jupyter
-  port: 80 
-  localPort: 8000 
+  - resourceType: service
+    resourceName: application-hub-proxy-public
+    namespace: jupyter
+    port: 80
+    localPort: 8000
 
 profiles:
-
   - name: baseline
-
     patches:
       - op: add
         path: /deploy/helm/releases/0/setValueTemplates/jupyterhub.hub.image.name
@@ -65,12 +72,18 @@ profiles:
         value: 1.5.2
       - op: add
         path: /deploy/helm/releases/0/setFiles/configYml
-        value: config.yaml
-
+        value: config/config.yml
 
   - name: develop
-
     patches:
+      - op: add
+        path: /deploy/kubeContext
+        value: minikube
+      - op: add
+        path: /deploy/helm/releases/1/setValues
+        value:
+          hostNetwork: true
+          dnsPolicy: ClusterFirstWithHostNet
       - op: add
         path: /deploy/helm/releases/0/setValueTemplates/jupyterhub.hub.image.name
         value: ghcr.io/eoepca/application-hub
@@ -79,10 +92,9 @@ profiles:
         value: latest-dev
       - op: add
         path: /deploy/helm/releases/0/setFiles/configYml
-        value: config.yaml
+        value: config/config.yml
 
   - name: main
-  
     patches:
       - op: add
         path: /deploy/helm/releases/0/setValueTemplates/jupyterhub.hub.image.name
@@ -90,4 +102,3 @@ profiles:
       - op: add
         path: /deploy/helm/releases/0/setValueTemplates/jupyterhub.hub.image.tag
         value: latest
-

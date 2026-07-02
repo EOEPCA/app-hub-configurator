@@ -19,7 +19,7 @@ spec:
           subPath: init.sh
       restartPolicy: Never
       volumes:
-      - name: init-script-volume
+      - name: init-script-volume 
         configMap:
           defaultMode: 0700
           name: init-script-configmap
